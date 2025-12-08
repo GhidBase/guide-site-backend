@@ -1,13 +1,2 @@
-Current process:
-
-get("/file-manager)
-get folders from database, including the file children
-pass the folders into the locals for the "file-manager" render
-
-How can I add a delete button?
-
-I need to run fs.unlink(filepath)
-
-Add to the ejs, a button that submits a post
-request to delete, and passes the filepath in
-as a parameter
+Need a way to create a game
+This method should not allow the creation of duplicates

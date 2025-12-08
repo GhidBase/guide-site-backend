@@ -29,6 +29,9 @@ app.use(
 );
 app.use(passport.session());
 
+// To receive JSON
+app.use(express.json())
+
 // To allow form inputs
 // Without this, form submissions would have
 // an empty req.body

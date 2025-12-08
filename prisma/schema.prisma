@@ -23,22 +23,29 @@ model User {
 }
 
 model Game {
-  id         Int         @id
-  title      String
+  id         Int         @id @default(autoincrement())
+  title      String      @unique
   checklists Checklist[]
 }
 
 model Checklist {
-  id             Int             @id
+  id             Int             @id @default(autoincrement())
   title          String
   game           Game            @relation(fields: [gameId], references: [id])
   gameId         Int
   checklistItems ChecklistItem[]
+  configuration  String? // The layout of the checklist, e.g. "Flea Hunting Checklist" to be read by the frontend
+
+  @@unique([gameId, title])
 }
 
 model ChecklistItem {
-  id          Int       @id
+  id          Int       @id @default(autoincrement())
   title       String
   checklist   Checklist @relation(fields: [checklistId], references: [id])
   checklistId Int
+  imageOne    String?
+  imageTwo    String?
+
+  @@unique([checklistId, title])
 }
