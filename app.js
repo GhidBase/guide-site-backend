@@ -29,8 +29,11 @@ app.use(
 );
 app.use(passport.session());
 
+import cors from "cors";
+app.use(cors());
+
 // To receive JSON
-app.use(express.json())
+app.use(express.json());
 
 // To allow form inputs
 // Without this, form submissions would have
