@@ -97,6 +97,17 @@ async function createTag(title) {
     });
 }
 
+async function unlinkItemAndTag({ itemId, tagId }) {
+    return await prisma.checklistItem.update({
+        where: { id: itemId },
+        data: {
+            tags: {
+                disconnect: [{ id: tagId }],
+            },
+        },
+    });
+}
+
 export default {
     getGames,
     createGame,
@@ -108,4 +119,5 @@ export default {
     updateChecklistItem,
     getTags,
     createTag,
+    unlinkItemAndTag,
 };

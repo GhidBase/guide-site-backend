@@ -28,6 +28,11 @@ router.post("/checklists/:checklistId", gameController.postChecklistItem);
 
 router.get("/checklistItems/:id", gameController.getChecklistItem);
 
+router.delete(
+    "/checklistItems/:itemId/tags/:tagId",
+    gameController.deleteItemAndTagConnection
+);
+
 router.put("/checklistItems/:itemId", gameController.updateChecklistItem);
 
 router.get("/tags", gameController.getTags);

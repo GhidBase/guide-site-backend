@@ -68,7 +68,7 @@ async function updateChecklistItem(req, res) {
     }
     json.itemId = itemId;
     await db.updateChecklistItem(json);
-    const result = db.getChecklistItem(itemId);
+    const result = await db.getChecklistItem(itemId);
     res.send(result);
 }
 
@@ -86,6 +86,18 @@ async function postTag(req, res) {
     res.send(result);
 }
 
+async function deleteItemAndTagConnection(req, res) {
+    const itemId = +req.params.itemId;
+    const tagId = +req.params.tagId;
+    const response = { itemId, tagId };
+    const checklistItem = await db.getChecklistItem(itemId);
+    console.log(checklistItem);
+    await db.unlinkItemAndTag({ itemId, tagId });
+    const checklistItem2 = await db.getChecklistItem(itemId);
+    console.log(checklistItem2);
+    res.send(checklistItem2);
+}
+
 export default {
     getGames,
     postGame,
@@ -97,4 +109,5 @@ export default {
     getTags,
     postTag,
     getChecklistItem,
+    deleteItemAndTagConnection,
 };
