@@ -46,6 +46,12 @@ model ChecklistItem {
   checklistId Int
   imageOne    String?
   imageTwo    String?
+  tags        Tag[]
 
   @@unique([checklistId, title])
+}
+
+model Tag {
+  id             Int             @id @default(autoincrement())
+  checklistItems ChecklistItem[]
 }
