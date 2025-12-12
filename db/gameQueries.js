@@ -1,3 +1,4 @@
+import { connect } from "http2";
 import { prisma } from "../lib/prisma.js";
 
 async function getGames() {
@@ -34,6 +35,9 @@ async function getChecklistItems(checklistId) {
         where: {
             checklistId,
         },
+        include: {
+            tags: true,
+        },
     });
 }
 
@@ -46,7 +50,24 @@ async function createChecklistItem(title, checklistId) {
     });
 }
 
-async function updateChecklistItem({ itemId, title, imageOne, imageTwo } = {}) {
+async function getChecklistItem(id) {
+    return await prisma.checklistItem.findUnique({
+        where: {
+            id,
+        },
+        include: {
+            tags: true,
+        },
+    });
+}
+
+async function updateChecklistItem({
+    itemId,
+    title,
+    imageOne,
+    imageTwo,
+    tagId,
+} = {}) {
     return await prisma.checklistItem.update({
         where: {
             id: itemId,
@@ -55,7 +76,24 @@ async function updateChecklistItem({ itemId, title, imageOne, imageTwo } = {}) {
             title,
             imageOne,
             imageTwo,
+            ...(tagId && {
+                tags: {
+                    connect: {
+                        id: tagId,
+                    },
+                },
+            }),
         },
+    });
+}
+
+async function getTags() {
+    return await prisma.tag.findMany();
+}
+
+async function createTag(title) {
+    return await prisma.tag.create({
+        data: { title },
     });
 }
 
@@ -66,5 +104,8 @@ export default {
     getChecklists,
     getChecklistItems,
     createChecklistItem,
+    getChecklistItem,
     updateChecklistItem,
+    getTags,
+    createTag,
 };

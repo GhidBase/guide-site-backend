@@ -26,6 +26,7 @@ model Game {
   id         Int         @id @default(autoincrement())
   title      String      @unique
   checklists Checklist[]
+  tags       Tag[]
 }
 
 model Checklist {
@@ -53,5 +54,7 @@ model ChecklistItem {
 
 model Tag {
   id             Int             @id @default(autoincrement())
+  title          String          @unique
   checklistItems ChecklistItem[]
+  games          Game[]
 }

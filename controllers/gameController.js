@@ -54,6 +54,12 @@ async function postChecklistItem(req, res) {
     res.send(result);
 }
 
+async function getChecklistItem(req, res) {
+    const id = +req.params.id;
+    const result = await db.getChecklistItem(id);
+    res.send(result);
+}
+
 async function updateChecklistItem(req, res) {
     const json = req.body;
     const itemId = +req.params.itemId;
@@ -61,7 +67,22 @@ async function updateChecklistItem(req, res) {
         console.log("update to checklist item failed, no itemId received");
     }
     json.itemId = itemId;
-    const result = await db.updateChecklistItem(json);
+    await db.updateChecklistItem(json);
+    const result = db.getChecklistItem(itemId);
+    res.send(result);
+}
+
+async function getTags(req, res) {
+    const tags = await db.getTags();
+    console.log(tags);
+    res.send(tags);
+}
+
+async function postTag(req, res) {
+    const title = req.params.tagTitle;
+    console.log(title);
+    console.log("Creating tag");
+    const result = await db.createTag(title);
     res.send(result);
 }
 
@@ -73,4 +94,7 @@ export default {
     getChecklistItems,
     postChecklistItem,
     updateChecklistItem,
+    getTags,
+    postTag,
+    getChecklistItem,
 };
