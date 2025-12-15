@@ -59,3 +59,16 @@ model Tag {
   checklistItems ChecklistItem[]
   games          Game[]
 }
+
+model Page {
+  id     Int     @id @default(autoincrement())
+  title  String
+  blocks Block[]
+}
+
+model Block {
+  id      Int   @id @default(autoincrement())
+  page    Page  @relation(fields: [pageId], references: [id])
+  pageId  Int
+  content Json?
+}

@@ -5,6 +5,7 @@ dotenv.config();
 // Express
 import express from "express";
 import router from "./routes/router.js";
+import pagesRouter from "./routes/pagesRouter.js";
 const app = express();
 
 // Authentication
@@ -41,6 +42,7 @@ app.use(express.json());
 // "extended: true" allows nested objects in the data
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/pages", pagesRouter);
 app.use("/", router);
 
 const PORT = process.env.PORT;
