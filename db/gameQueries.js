@@ -67,6 +67,7 @@ async function updateChecklistItem({
     imageOne,
     imageTwo,
     tagId,
+    description
 } = {}) {
     return await prisma.checklistItem.update({
         where: {
@@ -76,6 +77,7 @@ async function updateChecklistItem({
             title,
             imageOne,
             imageTwo,
+            description,
             ...(tagId && {
                 tags: {
                     connect: {

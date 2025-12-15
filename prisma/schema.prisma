@@ -47,6 +47,7 @@ model ChecklistItem {
   checklistId Int
   imageOne    String?
   imageTwo    String?
+  description String?
   tags        Tag[]
 
   @@unique([checklistId, title])
