@@ -8,4 +8,18 @@ async function deleteBlock(id) {
     });
 }
 
-export default { deleteBlock };
+async function updateBlock(id, content) {
+    return await prisma.block.update({
+        where: {
+            id,
+        },
+        data: {
+            content: {
+                type: "richText",
+                content,
+            },
+        },
+    });
+}
+
+export default { deleteBlock, updateBlock };
