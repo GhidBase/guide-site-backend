@@ -47,10 +47,11 @@ async function updatePage(req, res) {
 async function getPage(req, res) {
     console.log("Received page get request");
     const pageId = +req.params.pageId;
+    const page = await db.getPage(pageId);
     const blocks = await db.getPageBlocks(pageId);
-    console.log("blocks:");
-    console.log(blocks);
-    res.send(blocks);
+    console.log("page and blocks:");
+    console.log(page, blocks);
+    res.send({ page, blocks });
 }
 
 async function createBlockForPage(req, res) {

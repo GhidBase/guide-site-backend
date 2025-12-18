@@ -47,6 +47,14 @@ async function updatePage({ id, title } = {}) {
     });
 }
 
+async function getPage(id) {
+    return await prisma.page.findUnique({
+        where: {
+            id,
+        },
+    });
+}
+
 async function getPageBlocks(pageId) {
     return await prisma.block.findMany({
         where: {
@@ -65,11 +73,12 @@ async function createBlockForPage(pageId) {
 
 export default {
     getPages,
+    getPage,
     createPage,
     checkPagesForTitle,
     deletePageById,
     checkPageById,
     updatePage,
     getPageBlocks,
-    createBlockForPage
+    createBlockForPage,
 };
