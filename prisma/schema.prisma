@@ -74,4 +74,5 @@ model Block {
   page    Page  @relation(fields: [pageId], references: [id])
   pageId  Int
   content Json?
+  order   Int?
 }
