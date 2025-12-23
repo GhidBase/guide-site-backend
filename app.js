@@ -8,6 +8,7 @@ import router from "./routes/router.js";
 import pagesRouter from "./routes/pagesRouter.js";
 import blocksRouter from "./routes/blocksRouter.js";
 import navbarRouter from "./routes/navbarRouter.js";
+import filesRouter from "./routes/filesRouter.js";
 import multer from "multer";
 const upload = multer({ dest: "uploads/" });
 
@@ -33,6 +34,7 @@ app.use(
         }),
     }),
 );
+
 app.use(passport.session());
 
 import cors from "cors";
@@ -50,6 +52,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/navbar", navbarRouter);
 app.use("/blocks", blocksRouter);
 app.use("/pages", pagesRouter);
+app.use("/files", filesRouter);
 app.use("/", router);
 
 const PORT = process.env.PORT;
