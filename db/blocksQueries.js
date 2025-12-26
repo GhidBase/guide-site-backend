@@ -8,7 +8,7 @@ async function deleteBlock(id) {
     });
 }
 
-async function updateBlock(id, content) {
+async function updateBlock({ id, content, content2 }) {
     return await prisma.block.update({
         where: {
             id,
@@ -17,6 +17,7 @@ async function updateBlock(id, content) {
             content: {
                 type: "richText",
                 content,
+                content2,
             },
         },
     });

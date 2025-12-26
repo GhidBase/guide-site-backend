@@ -78,6 +78,7 @@ model Block {
   content Json?
   order   Int?
   type    String?
+  files   File[]
 }
 
 model File {
@@ -85,4 +86,6 @@ model File {
   title    String
   filename String
   url      String
+  block    Block? @relation(fields: [blockId], references: [id])
+  blockId  Int?
 }

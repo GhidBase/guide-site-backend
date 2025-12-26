@@ -12,8 +12,8 @@ async function deleteBlock(req, res) {
 async function updateBlock(req, res) {
     const id = +req.params.blockId;
     console.log("Block update request received for Block ID: " + id);
-    const content = req.body.content;
-    const result = await db.updateBlock(id, content);
+    const { content, content2 } = req.body;
+    const result = await db.updateBlock({ id, content, content2 });
     console.log(result);
     res.send(result);
 }

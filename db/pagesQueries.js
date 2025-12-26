@@ -60,6 +60,9 @@ async function getPageBlocks(pageId) {
         where: {
             pageId,
         },
+        include: {
+            files: true,
+        },
     });
 }
 

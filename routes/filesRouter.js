@@ -27,7 +27,9 @@ const upload = multer({
         },
     }),
 });
-router.get("/", filesController.createBucket);
+
+// router.get("/", filesController.createBucket);
 router.post("/", upload.single("upload-file"), filesController.uploadFile);
+router.delete("/:fileId", filesController.deleteFile);
 
 export default router;
