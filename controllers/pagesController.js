@@ -54,27 +54,28 @@ async function getPage(req, res) {
     const pageInfo = type == "id" ? +req.params.pageInfo : req.params.pageInfo;
 
     console.log("page request type: " + type);
-    console.log("game: " + gameId);
+    console.log("game: " + gameId + "\n");
     let page, blocks;
     if (type == "id") {
         page = await db.getPage(pageInfo);
         blocks = await db.getPageBlocks(pageInfo);
     }
-    console.log(type);
     if (type == "title") {
-        console.log("executing page block");
-        console.log("title: " + pageInfo);
-        console.log("GameId: " + gameId);
         page = await db.getPageBySlugAndGameId({ slug: pageInfo, gameId });
         blocks = await db.getPageBlocksBySlugAndGameId({
             slug: pageInfo,
             gameId,
         });
     }
-    console.log(page);
-    console.log(blocks);
 
-    res.send({ page, blocks });
+    // I have notFound here to try and help distinguish between
+    // a page not being found, and a lack of a response from the
+    // server
+    let notFound = false;
+    if (page == null) {
+        notFound = true;
+    }
+    res.send({ page, blocks, notFound });
 }
 
 async function createBlockForPage(req, res) {

@@ -8,9 +8,8 @@ async function getGames(req, res) {
 
 async function getGame(req, res) {
     const { gameId } = req.params;
-    console.log(req.params);
-    console.log(req.params.gameId);
     const game = await db.getGame({ id: +gameId });
+    console.log("\nGet Game Data:")
     console.log(game);
     res.send(game);
 }
