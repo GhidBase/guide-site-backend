@@ -1,26 +1,30 @@
 import { prisma } from "../lib/prisma.js";
 
-async function getBlock(id) {
+async function getBlock({ id, gameId }) {
     return await prisma.block.findUnique({
-        where: { id },
+        where: {
+            id, page: {
+                gameId
+            }
+        },
         include: {
             files: true,
         },
     });
 }
 
-async function deleteBlock(id) {
+async function deleteBlock({ id, gameId }) {
     return await prisma.block.delete({
         where: {
-            id,
+            id, page: { gameId }
         },
     });
 }
 
-async function updateBlock({ id, content, content2 }) {
+async function updateBlock({ id, content, content2, gameId }) {
     return await prisma.block.update({
         where: {
-            id,
+            id, page: { gameId }
         },
         data: {
             content: {

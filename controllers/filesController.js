@@ -42,9 +42,10 @@ async function uploadFile(req, res) {
 async function deleteBlockFiles(req, res) {
     console.log("Block files delete request: " + req.params.blockId);
     const blockId = +req.params.blockId;
+    const gameId = +req.params.gameId;
 
     // Get list of files
-    const result = await db.getFilesByBlock(blockId);
+    const result = await db.getFilesByBlock({ blockId, gameId });
 
     // List S3 names
     const s3Urls = result.map((current) => current.filename);
@@ -66,7 +67,7 @@ async function deleteBlockFiles(req, res) {
     console.log(deleteS3Result);
 
     // Afterwards, delete all the files
-    const deletionResult = await db.deleteFilesByBlock(blockId);
+    const deletionResult = await db.deleteFilesByBlock({ blockId, gameId });
 
     console.log(deletionResult);
     res.send(deletionResult);
@@ -74,6 +75,8 @@ async function deleteBlockFiles(req, res) {
 
 async function deleteFile(req, res) {
     const id = +req.params.id;
+    const gameId = +req.params.gameId;
+
     console.log("ile delete request: " + id);
 
     const getFileResult = await db.getFile(id);
@@ -86,7 +89,7 @@ async function deleteFile(req, res) {
     }
     console.log(key);
 
-    const deleteFileDBResult = await db.deleteFile(id);
+    const deleteFileDBResult = await db.deleteFile({ id, gameId });
 
     console.log("Delete file from DB response:");
     console.log(deleteFileDBResult);

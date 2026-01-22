@@ -8,9 +8,9 @@ import { Router } from "express";
 const router = Router({ mergeParams: true });
 
 router.use("/navbar", navbarRouter);
-router.use("/blocks", blocksRouter);
-router.use("/pages", pagesRouter);
-router.use("/files", filesRouter);
+router.use("/blocks", blocksRouter); // good
+router.use("/pages", pagesRouter); // good
+router.use("/files", filesRouter); // good
 router.use("/", defaultRouter);
 
 export default router

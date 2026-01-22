@@ -12,7 +12,7 @@ import filesController from "../controllers/filesController.js";
 import requireAdmin from "../config/requireAdmin.js";
 
 const s3client = new S3Client({ region: "us-east-2" });
-const router = Router();
+const router = Router({ mergeParams: true });
 
 // route is files
 router.delete("/:id", requireAdmin, filesController.deleteFile);

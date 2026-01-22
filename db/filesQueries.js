@@ -14,23 +14,23 @@ async function getFile(id) {
     });
 }
 
-async function deleteFile(id) {
+async function deleteFile({ id, gameId }) {
     return await prisma.file.delete({
         where: {
-            id,
+            id, block: { page: { gameId } }
         },
     });
 }
 
-async function getFilesByBlock(blockId) {
+async function getFilesByBlock({ blockId, gameId }) {
     return await prisma.file.findMany({
-        where: { blockId },
+        where: { blockId, block: { page: { gameId } } },
     });
 }
 
-async function deleteFilesByBlock(blockId) {
+async function deleteFilesByBlock({blockId, gameId}) {
     return await prisma.file.deleteMany({
-        where: { blockId },
+        where: { blockId, block: { page: { gameId } } },
     });
 }
 
