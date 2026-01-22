@@ -6,7 +6,8 @@ import indexController from "../controllers/indexController.js";
 import gameController from "../controllers/gameController.js";
 import { validateSignup } from "../validators/authValidators.js";
 import requireAdmin from "../config/requireAdmin.js";
-
+// http://localhost:3000/pages/stun-guide?type=title&gameId=1
+// follow this route
 router.post("/sign-up", requireAdmin, [validateSignup, authController.addUser]);
 router.post("/log-in", requireAdmin, authController.login);
 router.get("/log-out", authController.logout);

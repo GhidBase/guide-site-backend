@@ -1,7 +1,11 @@
 import { prisma } from "../lib/prisma.js";
 
-async function getPages() {
-    return await prisma.page.findMany();
+async function getPages(gameId) {
+    return await prisma.page.findMany({
+        where: {
+            gameId
+        }
+    });
 }
 
 async function createPage(title, gameId) {
@@ -20,26 +24,27 @@ async function checkPagesForTitle(title) {
     return result !== null;
 }
 
-async function checkPageById(id) {
+async function checkPageById(id, gameId) {
     const result = await prisma.page.findUnique({
-        where: { id },
+        where: { id, gameId },
     });
 
     return result !== null;
 }
 
-async function deletePageById(id) {
+async function deletePageById(id, gameId) {
     return await prisma.page.delete({
         where: {
-            id,
+            id, gameId
         },
     });
 }
 
-async function updatePage({ id, title, slug } = {}) {
+async function updatePage({ id, title, slug, gameId } = {}) {
     return await prisma.page.update({
         where: {
             id,
+            gameId,
         },
         data: {
             title,
@@ -57,6 +62,9 @@ async function getPage(id) {
 }
 
 async function getPageBlocks(pageId) {
+    if (pageId == undefined || pageId == null) {
+        return null;
+    }
     return await prisma.block.findMany({
         where: {
             pageId,
