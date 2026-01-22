@@ -7,7 +7,7 @@ import defaultRouter from "./router.js";
 import { Router } from "express";
 const router = Router({ mergeParams: true });
 
-router.use("/navbar", navbarRouter);
+router.use("/navbar", navbarRouter); // good
 router.use("/blocks", blocksRouter); // good
 router.use("/pages", pagesRouter); // good
 router.use("/files", filesRouter); // good

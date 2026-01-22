@@ -1,5 +1,6 @@
 import { Router } from "express";
-const router = Router();
+const router = Router({ mergeParams: true });
+
 
 import authController from "../controllers/authController.js";
 import indexController from "../controllers/indexController.js";
