@@ -2,6 +2,7 @@ import { check } from "express-validator";
 import db from "../db/gameQueries.js";
 
 async function getGames(req, res) {
+    console.log("Fetching list of games")
     const games = await db.getGames();
     res.send(games);
 }

@@ -3,19 +3,21 @@ const router = Router({ mergeParams: true });
 
 
 import authController from "../controllers/authController.js";
-import indexController from "../controllers/indexController.js";
 import gameController from "../controllers/gameController.js";
 import { validateSignup } from "../validators/authValidators.js";
 import requireAdmin from "../config/requireAdmin.js";
-// http://localhost:3000/pages/stun-guide?type=title&gameId=1
-// follow this route
+
+// Not using these at the moment
 router.post("/sign-up", requireAdmin, [validateSignup, authController.addUser]);
 router.post("/log-in", requireAdmin, authController.login);
 router.get("/log-out", authController.logout);
-router.get("/", indexController.getIndex);
-router.get("/games", gameController.getGames);
-router.get("/games/:gameId", gameController.getGame);
-router.post("/games", requireAdmin, gameController.postGame);
+
+// route is "/games/"
+router.get("/", gameController.getGames); // good
+router.get("/:gameId", gameController.getGame); // good
+
+// There's no interface for these yet, revisit later
+router.post("/games", requireAdmin, gameController.postGame); //wip
 router.get("/games/:gameId/checklists", gameController.getChecklists);
 router.post(
     "/games/:gameId/checklists",

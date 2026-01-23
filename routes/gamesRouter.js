@@ -7,10 +7,12 @@ import defaultRouter from "./router.js";
 import { Router } from "express";
 const router = Router({ mergeParams: true });
 
-router.use("/navbar", navbarRouter); // good
-router.use("/blocks", blocksRouter); // good
-router.use("/pages", pagesRouter); // good
-router.use("/files", filesRouter); // good
+
+
 router.use("/", defaultRouter);
+router.use("/:gameId/navbar", navbarRouter); // good
+router.use("/:gameId/blocks", blocksRouter); // good
+router.use("/:gameId/pages", pagesRouter); // good
+router.use("/:gameId/files", filesRouter); // good
 
 export default router

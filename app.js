@@ -12,6 +12,7 @@ const upload = multer({ dest: "uploads/" });
 const app = express();
 
 import gamesRouter from "./routes/gamesRouter.js"
+import indexRouter from "./routes/indexRouter.js"
 
 // Authentication
 import session from "express-session";
@@ -48,7 +49,9 @@ app.use(express.json());
 // "extended: true" allows nested objects in the data
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/games/:gameId", gamesRouter)
+app.use("/games", gamesRouter)
+app.use("/", indexRouter)
+
 
 const PORT = process.env.PORT;
 app.listen(PORT, (error) => {
