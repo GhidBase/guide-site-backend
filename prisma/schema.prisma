@@ -10,16 +10,23 @@ datasource db {
 model Session {
   id        String   @id
   sid       String   @unique
-  data      String // MediumText may be needed for MySql
+  data      String
   expiresAt DateTime
+}
+
+enum Role {
+  USER
+  EDITOR
+  ADMIN
 }
 
 model User {
   id       Int     @id @default(autoincrement())
   email    String? @unique
   name     String?
-  username String
+  username String  @unique
   password String
+  role     Role    @default(USER)
 }
 
 model Game {
