@@ -9,12 +9,12 @@ import {
     // GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import filesController from "../controllers/filesController.js";
-import requireAdmin from "../config/requireAdmin.js";
+import { requireAuth } from "../config/auth.js";
 
 const s3client = new S3Client({ region: "us-east-2" });
 const router = Router();
 
 // route is files
-router.delete("/:id", requireAdmin, filesController.deleteFile);
+router.delete("/:id", requireAuth, filesController.deleteFile);
 
 export default router;

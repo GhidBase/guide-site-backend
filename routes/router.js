@@ -5,7 +5,7 @@ import authController from "../controllers/authController.js";
 import indexController from "../controllers/indexController.js";
 import gameController from "../controllers/gameController.js";
 import { validateSignup } from "../validators/authValidators.js";
-import requireAdmin from "../config/requireAdmin.js";
+import { requireAdmin, requireAuth, requireEditor } from "../config/auth.js";
 
 router.post("/sign-up", [validateSignup, authController.addUser]);
 router.post("/log-in", authController.login);

@@ -9,6 +9,7 @@ import pagesRouter from "./routes/pagesRouter.js";
 import blocksRouter from "./routes/blocksRouter.js";
 import navbarRouter from "./routes/navbarRouter.js";
 import filesRouter from "./routes/filesRouter.js";
+import reviewRouter from "./routes/reviewRouter.js";
 import multer from "multer";
 const upload = multer({ dest: "uploads/" });
 
@@ -53,6 +54,7 @@ app.use("/navbar", navbarRouter);
 app.use("/blocks", blocksRouter);
 app.use("/pages", pagesRouter);
 app.use("/files", filesRouter);
+app.use("/reviews", reviewRouter);
 app.use("/", router);
 
 const PORT = process.env.PORT;

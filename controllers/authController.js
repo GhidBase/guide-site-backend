@@ -32,7 +32,7 @@ async function addUser(req, res, next) {
         if (err) {
             return next(err);
         }
-        res.json(user);
+        res.json({ message: "Successfully signed up" });
     });
 }
 
@@ -57,14 +57,17 @@ function login(req, res, next) {
             if (err) {
                 return next(err);
             }
-            return res.json(user);
+            return res.json({ message: "Successfully logged in" });
         });
     })(req, res, next);
 }
 
 async function getUser(req, res) {
     if (req.user) {
-        res.json(req.user);
+        // Removes their password from the response for safety, even if its hashed
+        const user = req.user;
+        delete user.password;
+        res.json(user);
     } else {
         res.status(401).json({ message: "Not logged in" });
     }

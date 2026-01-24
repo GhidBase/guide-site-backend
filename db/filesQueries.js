@@ -1,8 +1,22 @@
 import { prisma } from "../lib/prisma.js";
 
-async function createFile({ title, url, filename, blockId }) {
+async function createFile({ title, url, filename, blockId, status = "PENDING_UPLOAD" }) {
     return await prisma.file.create({
-        data: { title, url, filename, blockId },
+        data: { title, url, filename, blockId, status },
+    });
+}
+
+async function updateFileStatus(id, newStatus) {
+    return await prisma.file.update({
+        where: { id },
+        data: { status: newStatus },
+    });
+}
+
+async function updateFile(id, data) {
+    return await prisma.file.update({
+        where: { id },
+        data: { ...data },
     });
 }
 

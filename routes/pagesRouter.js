@@ -1,10 +1,9 @@
-import requireAdmin from "../config/requireAdmin.js";
 import pagesController from "../controllers/pagesController.js";
+import { requireAdmin } from "../config/auth.js";
 
 import { Router } from "express";
 const router = Router();
 
-// route is "/pages"
 router.get("/", pagesController.getPages);
 router.post("/", requireAdmin, pagesController.postPage);
 router.get("/:pageInfo", pagesController.getPage);
