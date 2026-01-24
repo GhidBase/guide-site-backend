@@ -21,12 +21,50 @@ enum Role {
 }
 
 model User {
-    id       Int     @id @default(autoincrement())
-    email    String? @unique
-    name     String?
-    username String  @unique
-    password String
-    role     Role    @default(USER)
+    id             Int            @id @default(autoincrement())
+    email          String?        @unique
+    name           String?
+    username       String         @unique
+    password       String
+    role           Role           @default(USER)
+    pendingBlocks  PendingBlock[]
+    reviewedBlocks PendingBlock[] @relation("ReviewedBlocks")
+}
+
+enum ReviewStatus {
+    PENDING
+    ACCEPTED
+    REFUSED
+}
+
+enum PendingOperationType {
+    CREATE
+    UPDATE
+    DELETE
+    ADD_FILE
+    DELETE_FILE
+}
+
+model PendingBlock {
+    id            Int                  @id @default(autoincrement())
+    block         Block                @relation(fields: [blockId], references: [id], onDelete: Cascade)
+    blockId       Int
+    content       Json?
+    type          String?
+    user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId        Int
+    status        ReviewStatus         @default(PENDING)
+    createdAt     DateTime             @default(now())
+    updatedAt     DateTime             @updatedAt
+    reviewerId    Int?
+    reviewer      User?                @relation("ReviewedBlocks", fields: [reviewerId], references: [id], onDelete: SetNull)
+    reviewedAt    DateTime?
+    reviewMessage String?
+    operation     PendingOperationType @default(UPDATE)
+
+    @@index([status])
+    @@index([userId])
+    @@index([blockId])
 }
 
 model Game {
@@ -82,20 +120,30 @@ model Page {
 }
 
 model Block {
-    id      Int     @id @default(autoincrement())
-    page    Page    @relation(fields: [pageId], references: [id])
-    pageId  Int
-    content Json?
-    order   Int?
-    type    String?
-    files   File[]
+    id            Int            @id @default(autoincrement())
+    page          Page           @relation(fields: [pageId], references: [id])
+    pageId        Int
+    content       Json?
+    order         Int?
+    type          String?
+    files         File[]
+    pendingBlocks PendingBlock[]
+}
+
+enum FileStatus {
+    PENDING_UPLOAD
+    ACTIVE
+    PENDING_DELETION
+    DELETED
 }
 
 model File {
-    id       Int    @id @default(autoincrement())
-    title    String
-    filename String
-    url      String
-    block    Block? @relation(fields: [blockId], references: [id])
-    blockId  Int?
+    id        Int        @id @default(autoincrement())
+    title     String
+    filename  String
+    url       String
+    block     Block?     @relation(fields: [blockId], references: [id], onDelete: Cascade)
+    blockId   Int?
+    status    FileStatus @default(PENDING_UPLOAD)
+    createdAt DateTime   @default(now())
 }
