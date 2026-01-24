@@ -1,11 +1,7 @@
 export default function requireAdmin(req, res, next) {
-    const secret = req.headers["x-admin-secret"];
-    console.log("secret:");
-    console.log(secret);
-
-    if (!secret || secret !== process.env.ADMIN_SECRET) {
-        return res.sendStatus(403);
+    if (req.user && req.user.role === "ADMIN") {
+        next();
+    } else {
+        res.sendStatus(403);
     }
-
-    next();
 }
