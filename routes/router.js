@@ -7,9 +7,10 @@ import gameController from "../controllers/gameController.js";
 import { validateSignup } from "../validators/authValidators.js";
 import requireAdmin from "../config/requireAdmin.js";
 
-router.post("/sign-up", requireAdmin, [validateSignup, authController.addUser]);
-router.post("/log-in", requireAdmin, authController.login);
+router.post("/sign-up", [validateSignup, authController.addUser]);
+router.post("/log-in", authController.login);
 router.get("/log-out", authController.logout);
+router.get("/user", authController.getUser);
 router.get("/", indexController.getIndex);
 router.get("/games", gameController.getGames);
 router.get("/games/:gameId", gameController.getGame);

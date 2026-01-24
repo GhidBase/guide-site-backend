@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 import { check } from "express-validator";
 
-async function addUser(username, password) {
+async function addUser(username, password, role) {
     const exists = await prisma.user.findFirst({
         where: {
             username: username,
@@ -12,19 +12,19 @@ async function addUser(username, password) {
         data: {
             password: password,
             username: username,
+            role: role,
         },
     });
     return result;
 }
 
 async function getUser(username) {
-    const result = await prisma.user.findMany({
+    const result = await prisma.user.findUnique({
         where: {
             username: username,
         },
     });
-    if (result.length > 1 || result.length == 0) return false;
-    return result[0];
+    return result;
 }
 
 async function checkUserExists(username) {
