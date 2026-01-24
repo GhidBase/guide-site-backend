@@ -41,4 +41,10 @@ router.put(
 router.get("/tags", gameController.getTags);
 router.post("/tags/:tagTitle", requireAdmin, gameController.postTag);
 
+router.put(
+    "/users/:userId/role",
+    requireAdmin,
+    authController.updateUserRole,
+);
+
 export default router;

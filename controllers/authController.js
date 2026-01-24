@@ -73,4 +73,34 @@ async function getUser(req, res) {
     }
 }
 
-export default { addUser, logout, login, getUser };
+async function updateUserRole(req, res) {
+    const userId = +req.params.userId;
+    const { newRole } = req.body;
+
+    if (!userId || !newRole) {
+        return res.status(400).json({ message: "Missing userId or newRole" });
+    }
+
+    const validRoles = ["USER", "EDITOR", "ADMIN"];
+    if (!validRoles.includes(newRole)) {
+        return res.status(400).json({ message: "Invalid role specified" });
+    }
+
+    try {
+        const updatedUser = await db.updateUserRole(userId, newRole);
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        // Take out the password from the response for security
+        const { password, ...user } = updatedUser;
+        res.json({
+            message: "User role updated successfully",
+            user,
+        });
+    } catch (error) {
+        console.error("Error updating user role:", error);
+        res.status(500).json({ message: "Failed to update user role" });
+    }
+}
+
+export default { addUser, logout, login, getUser, updateUserRole };

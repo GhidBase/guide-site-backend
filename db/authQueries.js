@@ -43,9 +43,18 @@ async function getUserById(id) {
     return result;
 }
 
+
+async function updateUserRole(id, newRole) {
+    return await prisma.user.update({
+        where: { id: id },
+        data: { role: newRole },
+    });
+}
+
 export default {
     addUser,
     getUser,
     getUserById,
     checkUserExists,
+    updateUserRole,
 };
