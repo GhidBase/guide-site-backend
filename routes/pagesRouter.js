@@ -10,7 +10,15 @@ router.post("/", requireAdmin, pagesController.postPage);
 router.get("/:pageInfo", pagesController.getPage);
 router.delete("/:pageId", requireAdmin, pagesController.deletePage);
 router.put("/:pageId", requireAdmin, pagesController.updatePage);
-router.post("/:pageId/blocks", requireAdmin, pagesController.createBlockForPage);
-router.put("/:pageId/blocks", requireAdmin, pagesController.updateBlocksForPage);
+router.post(
+    "/:pageId/blocks",
+    requireAdmin,
+    pagesController.createBlockForPage,
+);
+router.put(
+    "/:pageId/blocks",
+    requireAdmin,
+    pagesController.updateBlocksForPage,
+);
 
 export default router;

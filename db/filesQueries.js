@@ -34,4 +34,10 @@ async function deleteFilesByBlock(blockId) {
     });
 }
 
-export default { createFile, deleteFile, getFile, deleteFilesByBlock, getFilesByBlock };
+export default {
+    createFile,
+    deleteFile,
+    getFile,
+    deleteFilesByBlock,
+    getFilesByBlock,
+};

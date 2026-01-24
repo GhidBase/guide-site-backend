@@ -25,8 +25,17 @@ const upload = multer({
 // route is "blocks"
 router.get("/:blockId", blocksController.getBlock);
 router.delete("/:blockId", requireAdmin, blocksController.deleteBlock);
-router.delete("/:blockId/files", requireAdmin, filesController.deleteBlockFiles);
+router.delete(
+    "/:blockId/files",
+    requireAdmin,
+    filesController.deleteBlockFiles,
+);
 router.put("/:blockId", requireAdmin, blocksController.updateBlock);
-router.post("/:blockId/files", requireAdmin, upload.any(), filesController.uploadFile);
+router.post(
+    "/:blockId/files",
+    requireAdmin,
+    upload.any(),
+    filesController.uploadFile,
+);
 
 export default router;

@@ -129,5 +129,5 @@ export default {
     getTags,
     createTag,
     unlinkItemAndTag,
-    getGame
+    getGame,
 };
