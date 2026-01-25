@@ -10,6 +10,10 @@ async function getBlock(req, res) {
 
 async function deleteBlock(req, res) {
     const id = +req.params.blockId;
+    const exists = await db.getBlock(id);
+    if (!exists) {
+        return res.status(404).json({ error: "Block not found" });
+    }
     console.log("Block deletion request received on block ID:" + id);
 
     if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
@@ -18,6 +22,14 @@ async function deleteBlock(req, res) {
         console.log(result);
         res.status(200).json(result);
     } else {
+        const existingPending =
+            await pendingDb.findPendingBlockByBlockIdAndOperation(id, "DELETE");
+        if (existingPending) {
+            return res.status(409).json({
+                error: "A pending deletion request for this block already exists.",
+            });
+        }
+
         await pendingDb.createPendingBlock({
             blockId: id,
             userId: req.user.id,
@@ -40,6 +52,14 @@ async function updateBlock(req, res) {
         console.log(result);
         res.status(200).json(result);
     } else {
+        const existingPending =
+            await pendingDb.findPendingBlockByBlockIdAndOperation(id, "UPDATE");
+        if (existingPending) {
+            return res.status(409).json({
+                error: "A pending update request for this block already exists.",
+            });
+        }
+
         await pendingDb.createPendingBlock({
             blockId: id,
             userId: req.user.id,
