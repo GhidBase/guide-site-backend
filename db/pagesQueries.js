@@ -5,8 +5,14 @@ async function getPages() {
 }
 
 async function createPage(title, gameId) {
+    // Null slugs can be error prone, users can change it later
+    const slug = title
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+
     return await prisma.page.create({
-        data: { title, gameId: 1 },
+        data: { title, gameId, slug },
     });
 }
 
@@ -106,6 +112,7 @@ async function offsetBlockOrderForPage(pageId, order) {
     // Specifically, offsets order starting from "order", inclusive
     return await prisma.block.updateMany({
         where: {
+            pageId,
             order: {
                 gte: order,
             },
