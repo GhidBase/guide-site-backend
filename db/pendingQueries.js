@@ -53,10 +53,21 @@ async function deletePendingBlock(id) {
     });
 }
 
+async function findPendingBlockByBlockIdAndOperation(blockId, operation) {
+    return await prisma.pendingBlock.findFirst({
+        where: {
+            blockId,
+            operation,
+            status: "PENDING",
+        },
+    });
+}
+
 export default {
     createPendingBlock,
     getPendingBlock,
     getPendingBlocks,
     updatePendingBlock,
     deletePendingBlock,
+    findPendingBlockByBlockIdAndOperation,
 };

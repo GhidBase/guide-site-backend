@@ -1,12 +1,36 @@
 import { prisma } from "../lib/prisma.js";
 
-async function createFile({ title, url, filename, blockId, status = "PENDING_UPLOAD" }) {
+async function createFile({
+    title,
+    url,
+    filename,
+    blockId,
+    status = "PENDING_UPLOAD",
+}) {
     return await prisma.file.create({
         data: { title, url, filename, blockId, status },
     });
 }
 
+// State machine validation
+const VALID_TRANSITIONS = {
+    PENDING_UPLOAD: ["ACTIVE", "DELETED"],
+    ACTIVE: ["PENDING_DELETION", "DELETED"],
+    PENDING_DELETION: ["ACTIVE", "DELETED"],
+    DELETED: [],
+};
+
 async function updateFileStatus(id, newStatus) {
+    const file = await getFile(id);
+    if (!file) throw new Error("File not found");
+
+    const validNext = VALID_TRANSITIONS[file.status];
+    if (!validNext.includes(newStatus)) {
+        throw new Error(
+            `Invalid transition from ${file.status} to ${newStatus}`,
+        );
+    }
+
     return await prisma.file.update({
         where: { id },
         data: { status: newStatus },
@@ -54,4 +78,6 @@ export default {
     getFile,
     deleteFilesByBlock,
     getFilesByBlock,
+    updateFileStatus,
+    updateFile,
 };

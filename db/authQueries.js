@@ -1,5 +1,4 @@
 import { prisma } from "../lib/prisma.js";
-import { check } from "express-validator";
 
 async function addUser(username, password, role) {
     const exists = await prisma.user.findFirst({
@@ -42,7 +41,6 @@ async function getUserById(id) {
     });
     return result;
 }
-
 
 async function updateUserRole(id, newRole) {
     return await prisma.user.update({
