@@ -47,8 +47,8 @@ enum PendingOperationType {
 
 model PendingBlock {
     id            Int                  @id @default(autoincrement())
-    block         Block                @relation(fields: [blockId], references: [id], onDelete: Cascade)
-    blockId       Int
+    block         Block?               @relation(fields: [blockId], references: [id], onDelete: Cascade)
+    blockId       Int?
     content       Json?
     type          String?
     user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
