@@ -1,6 +1,7 @@
 import pendingDb from "../db/pendingQueries.js";
 import filesDb from "../db/filesQueries.js";
 import blocksDb from "../db/blocksQueries.js";
+import pagesDb from "../db/pagesQueries.js";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const s3client = new S3Client({ region: "us-east-2" });
@@ -40,11 +41,21 @@ async function acceptReview(req, res) {
                 break;
 
             case "UPDATE":
-                await blocksDb.updateBlock({
-                    id: pending.blockId,
-                    content: pending.content?.content,
-                    content2: pending.content?.content2,
-                });
+                if (pending.blockId) {
+                    await blocksDb.updateBlock({
+                        id: pending.blockId,
+                        content: pending.content?.content,
+                        content2: pending.content?.content2,
+                    });
+                } else if (
+                    pending.content?.pageId &&
+                    pending.content?.updateType === "offset"
+                ) {
+                    await pagesDb.offsetBlockOrderForPage(
+                        pending.content.pageId,
+                        pending.content.order,
+                    );
+                }
                 break;
 
             case "DELETE_FILE":
@@ -67,6 +78,16 @@ async function acceptReview(req, res) {
 
             case "DELETE":
                 await blocksDb.deleteBlock(pending.blockId);
+                break;
+
+            case "CREATE":
+                if (pending.content?.pageId && pending.content?.order) {
+                    await pagesDb.createBlockForPage({
+                        pageId: pending.content.pageId,
+                        order: pending.content.order,
+                        type: pending.content.type,
+                    });
+                }
                 break;
 
             default:
