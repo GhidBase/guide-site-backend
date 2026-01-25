@@ -65,8 +65,7 @@ function login(req, res, next) {
 async function getUser(req, res) {
     if (req.user) {
         // Removes their password from the response for safety, even if its hashed
-        const user = req.user;
-        delete user.password;
+        const { password, ...user } = req.user;
         res.json(user);
     } else {
         res.status(401).json({ message: "Not logged in" });

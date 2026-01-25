@@ -10,8 +10,9 @@ import blocksRouter from "./routes/blocksRouter.js";
 import navbarRouter from "./routes/navbarRouter.js";
 import filesRouter from "./routes/filesRouter.js";
 import reviewRouter from "./routes/reviewRouter.js";
-import multer from "multer";
-const upload = multer({ dest: "uploads/" });
+// unused here
+// import multer from "multer";
+// const upload = multer({ dest: "uploads/" });
 
 const app = express();
 
