@@ -2,7 +2,6 @@ import {
     S3Client,
     CreateBucketCommand,
     DeleteObjectCommand,
-    paginateListObjectsV2,
     GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import db from "../db/filesQueries.js";
@@ -58,8 +57,7 @@ async function uploadFile(req, res) {
             blockId,
             userId: req.user.id,
             operation: "ADD_FILE",
-            fileId: newFile.id,
-            content: { title, url, filename },
+            content: { title, url, filename, fileId: newFile.id },
             type: "file-upload-request",
         });
         res.status(202).json({
@@ -73,32 +71,63 @@ async function deleteBlockFiles(req, res) {
     console.log("Block files delete request: " + req.params.blockId);
     const blockId = +req.params.blockId;
 
-    // Get list of files
-    const result = await db.getFilesByBlock(blockId);
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        // Get list of files
+        const result = await db.getFilesByBlock(blockId);
 
-    // List S3 names
-    const s3Filenames = result.map((current) => current.filename);
+        // List S3 names
+        const s3Filenames = result.map((current) => current.filename);
 
-    // Delete them all from amazon s3
-    console.log("Deleting S3 files");
-    const deleteS3Result = await Promise.all(
-        s3Filenames.map((filename) =>
-            s3client.send(
-                new DeleteObjectCommand({
-                    Bucket: "ldg-guides-images",
-                    Key: filename,
+        // Delete them all from amazon s3
+        console.log("Deleting S3 files");
+        const deleteS3Result = await Promise.all(
+            s3Filenames.map((filename) =>
+                s3client.send(
+                    new DeleteObjectCommand({
+                        Bucket: "ldg-guides-images",
+                        Key: filename,
+                    }),
+                ),
+            ),
+        );
+
+        console.log(deleteS3Result);
+
+        // Afterwards, delete all the files from DB
+        const deletionResult = await db.deleteFilesByBlock(blockId);
+
+        console.log(deletionResult);
+        res.status(200).json(deletionResult);
+    } else {
+        const files = await db.getFilesByBlock(blockId);
+
+        await Promise.all(
+            files.map((file) =>
+                pendingDb.createPendingBlock({
+                    blockId: blockId,
+                    userId: req.user.id,
+                    operation: "DELETE_FILE",
+                    content: {
+                        filename: file.filename,
+                        url: file.url,
+                        fileId: file.id,
+                    },
+                    type: "file-deletion-request",
                 }),
             ),
-        ),
-    );
+        );
 
-    console.log(deleteS3Result);
+        await Promise.all(
+            files.map((file) =>
+                db.updateFileStatus(file.id, "PENDING_DELETION"),
+            ),
+        );
 
-    // Afterwards, delete all the files
-    const deletionResult = await db.deleteFilesByBlock(blockId);
-
-    console.log(deletionResult);
-    res.send(deletionResult);
+        res.status(202).json({
+            message: "File deletions requested, pending review.",
+            fileCount: files.length,
+        });
+    }
 }
 
 async function deleteFile(req, res) {
@@ -147,8 +176,11 @@ async function deleteFile(req, res) {
             blockId: fileToDelete.blockId,
             userId: req.user.id,
             operation: "DELETE_FILE",
-            fileId: fileToDelete.id,
-            content: { filename: fileToDelete.filename, url: fileToDelete.url },
+            content: {
+                filename: fileToDelete.filename,
+                url: fileToDelete.url,
+                fileId: fileToDelete.id,
+            },
             type: "file-deletion-request",
         });
         await db.updateFileStatus(id, "PENDING_DELETION");
