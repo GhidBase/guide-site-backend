@@ -51,10 +51,22 @@ async function updateUserRole(id, newRole) {
     });
 }
 
+async function getAllUsers() {
+    const result = await prisma.user.findMany({
+        select: {
+            id: true,
+            username: true,
+            role: true,
+        },
+    });
+    return result;
+}
+
 export default {
     addUser,
     getUser,
     getUserById,
     checkUserExists,
     updateUserRole,
+    getAllUsers,
 };

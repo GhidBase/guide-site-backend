@@ -47,4 +47,6 @@ router.put(
     authController.updateUserRole,
 );
 
+router.get("/users", requireAdmin, authController.getAllUsers);
+
 export default router;

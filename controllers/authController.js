@@ -103,4 +103,14 @@ async function updateUserRole(req, res) {
     }
 }
 
-export default { addUser, logout, login, getUser, updateUserRole };
+async function getAllUsers(req, res) {
+    try {
+        const users = await db.getAllUsers();
+        res.json(users);
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ message: "Failed to fetch users" });
+    }
+}
+
+export default { addUser, logout, login, getUser, updateUserRole, getAllUsers };
