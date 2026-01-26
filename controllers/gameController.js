@@ -14,6 +14,9 @@ async function getGameByTitle(req, res) {
     const game = await db.getGameBySlug({ slug });
     console.log("Result: ");
     console.log(game);
+    if (!game) {
+        res.status(404).json({ error: "Game not found" });
+    }
     res.send(game);
 }
 
