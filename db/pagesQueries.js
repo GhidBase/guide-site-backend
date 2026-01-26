@@ -10,7 +10,7 @@ async function getPages(gameId) {
 
 async function createPage(title, gameId) {
     return await prisma.page.create({
-        data: { title, gameId: 1 },
+        data: { title, gameId },
     });
 }
 

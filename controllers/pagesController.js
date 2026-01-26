@@ -3,7 +3,7 @@ import db from "../db/pagesQueries.js";
 
 async function getPages(req, res) {
     const gameId = +req.params.gameId;
-    console.log("pages request received");
+    console.log("pages request received for gameId :" + gameId);
     const result = await db.getPages(gameId);
     res.send(result);
 }
