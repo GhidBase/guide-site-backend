@@ -13,7 +13,8 @@ async function postPage(req, res) {
     const gameId = +req.params.gameId;
 
     console.log("Page POST request received");
-    const exists = await db.checkPagesForTitle(title);
+    console.log(gameId);
+    const exists = await db.checkPagesForTitle({ title, gameId });
     if (exists) {
         console.log("Page already exists");
         res.status(400).send({ error: "Page already exists" });

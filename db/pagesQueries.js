@@ -3,8 +3,8 @@ import { prisma } from "../lib/prisma.js";
 async function getPages(gameId) {
     return await prisma.page.findMany({
         where: {
-            gameId
-        }
+            gameId,
+        },
     });
 }
 
@@ -14,10 +14,11 @@ async function createPage(title, gameId) {
     });
 }
 
-async function checkPagesForTitle(title) {
+async function checkPagesForTitle({ title, gameId }) {
     const result = await prisma.page.findFirst({
         where: {
             title,
+            gameId,
         },
     });
 
@@ -35,7 +36,8 @@ async function checkPageById(id, gameId) {
 async function deletePageById(id, gameId) {
     return await prisma.page.delete({
         where: {
-            id, gameId
+            id,
+            gameId,
         },
     });
 }
