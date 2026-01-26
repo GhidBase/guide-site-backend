@@ -53,18 +53,23 @@ async function updatePage(req, res) {
 
 async function getPage(req, res) {
     console.log("Received page get request");
-    console.log(req.params)
+    console.log(req.params);
     const gameId = +req.params.gameId;
-    const slug = req.params.slug
-    console.log("gameId: " + gameId)
+    const slug = req.params.slug;
+    console.log("gameId: " + gameId);
     // If the type is ID we don't want a string we want a number
     // const pageInfo = type == "id" ? +req.params.pageInfo : req.params.pageInfo;
 
     console.log("game: " + gameId + "\n");
     let page, blocks;
+    console.log("GameId: " + gameId);
+    console.log("PageSlug: " + slug);
     page = await db.getPageBySlugAndGameId({ gameId, slug });
-    blocks = await db.getPageBlocks(page.id);
-
+    if (page != null) {
+        console.log("Page not null");
+        console.log(page);
+        blocks = await db.getPageBlocks(page.id);
+    }
 
     // I have notFound here to help distinguish between
     // a page not being found, and a lack of a response from the

@@ -12,10 +12,29 @@ async function getGame({ id }) {
     });
 }
 
+async function getGameBySlug({ slug }) {
+    return await prisma.game.findFirst({
+        where: { slug },
+    });
+}
+
 async function createGame(title) {
     return await prisma.game.create({
         data: {
             title,
+        },
+    });
+}
+
+async function updateGame({ title, id, slug, navbar }) {
+    return await prisma.game.update({
+        where: {
+            id,
+        },
+        data: {
+            title,
+            slug,
+            navbar,
         },
     });
 }
@@ -129,5 +148,7 @@ export default {
     getTags,
     createTag,
     unlinkItemAndTag,
-    getGame
+    getGame,
+    updateGame,
+    getGameBySlug,
 };

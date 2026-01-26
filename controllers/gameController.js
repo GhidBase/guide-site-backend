@@ -2,20 +2,31 @@ import { check } from "express-validator";
 import db from "../db/gameQueries.js";
 
 async function getGames(req, res) {
-    console.log("Fetching list of games")
+    console.log("Fetching list of games");
     const games = await db.getGames();
     res.send(games);
+}
+
+async function getGameByTitle(req, res) {
+    console.log("Fetching game by title");
+    const slug = req.params.gameSlug;
+    console.log("title being searched: " + slug);
+    const game = await db.getGameBySlug({ slug });
+    console.log("Result: ");
+    console.log(game);
+    res.send(game);
 }
 
 async function getGame(req, res) {
     const { gameId } = req.params;
     const game = await db.getGame({ id: +gameId });
-    console.log("\nGet Game Data:")
+    console.log("\nGet Game Data:");
     console.log(game);
     res.send(game);
 }
 
 async function postGame(req, res) {
+    console.log("adding game");
     if (req.body.title == undefined) {
         res.status(400).send("Bad Request: Title value is undefined");
         return;
@@ -23,6 +34,18 @@ async function postGame(req, res) {
 
     const game = await db.createGame(req.body.title);
     res.status(200).send(game);
+}
+
+async function updateGame(req, res) {
+    console.log("Updating game");
+    const id = +req.params.gameId;
+    const slug = req.body.slug;
+    const title = req.body.title;
+    const navbar = req.body.navbar;
+    console.log(id, title, slug);
+    const result = await db.updateGame({ id, slug, title, navbar });
+    console.log(result);
+    res.send(result);
 }
 
 async function getChecklists(req, res) {
@@ -120,4 +143,6 @@ export default {
     getChecklistItem,
     deleteItemAndTagConnection,
     getGame,
+    updateGame,
+    getGameByTitle,
 };

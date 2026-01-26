@@ -8,11 +8,11 @@ import { Router } from "express";
 const router = Router({ mergeParams: true });
 
 
-
-router.use("/", defaultRouter);
+// route - /games
 router.use("/:gameId/navbar", navbarRouter); // good
 router.use("/:gameId/blocks", blocksRouter); // good
 router.use("/:gameId/pages", pagesRouter); // good
 router.use("/:gameId/files", filesRouter); // good
+router.use("/", defaultRouter);
 
 export default router
