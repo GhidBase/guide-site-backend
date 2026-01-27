@@ -14,7 +14,7 @@ router.get("/log-out", authController.logout);
 // route is "/games/"
 router.get("/", gameController.getGames);
 router.get("/by-slug/:gameSlug", gameController.getGameByTitle);
-router.get("by-id/:gameId", gameController.getGame);
+router.get("/by-id/:gameId", gameController.getGame);
 
 // There's no interface for these yet, revisit later
 router.post("/", requireAdmin, gameController.postGame); //wip
