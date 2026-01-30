@@ -15,7 +15,7 @@ async function getGameByTitle(req, res) {
     console.log("Result: ");
     console.log(game);
     if (!game) {
-        res.status(404).json({ error: "Game not found" });
+        return res.status(404).json({ error: "Game not found" });
     }
     res.send(game);
 }

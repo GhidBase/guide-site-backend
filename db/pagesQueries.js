@@ -77,6 +77,12 @@ async function getPageBlocks(pageId) {
     });
 }
 
+async function getPageBySlugWithNoGame({ slug }) {
+    return await prisma.page.findFirst({
+        where: { slug, gameId: undefined },
+    });
+}
+
 async function getPageBySlugAndGameId({ slug, gameId }) {
     return await prisma.page.findUnique({
         where: {
@@ -141,4 +147,5 @@ export default {
     offsetBlockOrderForPage,
     getPageBySlugAndGameId,
     getPageBlocksBySlugAndGameId,
+    getPageBySlugWithNoGame,
 };

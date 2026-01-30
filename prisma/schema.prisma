@@ -68,9 +68,8 @@ model Page {
   title  String
   slug   String?
   blocks Block[]
-  game   Game    @relation(fields: [gameId], references: [id])
-  gameId Int
-
+  game   Game?    @relation(fields: [gameId], references: [id])
+  gameId Int?
   @@unique([slug, gameId])
 }
 
