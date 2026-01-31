@@ -53,12 +53,22 @@ async function updatePage(req, res) {
 }
 
 async function getNonGamePage(req, res) {
-    console.log("Received non game page request");
+    console.log("\nReceived non game page request");
     console.log(req.params);
     const slug = req.params.pageSlug;
-    const result = await db.getPageBySlugWithNoGame({ slug });
-    console.log(result);
-    res.send(result);
+    const page = await db.getPageBySlugWithNoGame({ slug });
+    let blocks = [];
+    if (!!page) {
+        console.log("Page not null");
+        console.log(page);
+        blocks = await db.getPageBlocks(page.id);
+    }
+
+    let notFound = false;
+    if (page == null) {
+        notFound = true;
+    }
+    res.send({ page, blocks, notFound });
 }
 
 async function getPage(req, res) {
