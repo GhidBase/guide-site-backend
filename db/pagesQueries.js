@@ -83,6 +83,12 @@ async function getPageBySlugWithNoGame({ slug }) {
     });
 }
 
+async function getPagesWithoutGame() {
+    return await prisma.page.findMany({
+        where: { gameId: null },
+    });
+}
+
 async function getPageBySlugAndGameId({ slug, gameId }) {
     return await prisma.page.findUnique({
         where: {
@@ -148,4 +154,5 @@ export default {
     getPageBySlugAndGameId,
     getPageBlocksBySlugAndGameId,
     getPageBySlugWithNoGame,
+    getPagesWithoutGame,
 };

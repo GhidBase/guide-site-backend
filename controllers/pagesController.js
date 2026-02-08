@@ -71,6 +71,15 @@ async function getNonGamePage(req, res) {
     res.send({ page, blocks, notFound });
 }
 
+async function getNonGamePages(req, res) {
+    console.log("\n Received request for non game pages");
+    console.log(req.params);
+    const pages = await db.getPagesWithoutGame();
+    console.log(pages);
+
+    res.send(pages);
+}
+
 async function getPage(req, res) {
     console.log("Received page get request");
     console.log(req.params);
@@ -139,4 +148,5 @@ export default {
     createBlockForPage,
     updateBlocksForPage,
     getNonGamePage,
+    getNonGamePages,
 };
