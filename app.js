@@ -56,8 +56,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/games", gamesRouter);
-app.use("/", indexRouter);
 app.use("/sections", sectionsRouter);
+app.use("/", indexRouter);
 
 const PORT = process.env.PORT;
 app.listen(PORT, (error) => {
