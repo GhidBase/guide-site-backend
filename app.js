@@ -7,7 +7,7 @@ import express from "express";
 import router from "./routes/router.js";
 import pagesRouter from "./routes/pagesRouter.js";
 import blocksRouter from "./routes/blocksRouter.js";
-import navbarRouter from "./routes/navbarRouter.js";
+import navbarsRouter from "./routes/navbarRouter.js";
 import filesRouter from "./routes/filesRouter.js";
 import sectionsRouter from "./routes/sectionsRouter.js";
 
@@ -57,6 +57,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/games", gamesRouter);
 app.use("/sections", sectionsRouter);
+app.use("/navbars", navbarsRouter);
 app.use("/", indexRouter);
 
 const PORT = process.env.PORT;

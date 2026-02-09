@@ -79,6 +79,7 @@ model Page {
   id        Int     @id @default(autoincrement())
   title     String
   slug      String?
+  navbarTitle String?
   blocks    Block[]
   game      Game?    @relation(fields: [gameId], references: [id])
   gameId    Int?

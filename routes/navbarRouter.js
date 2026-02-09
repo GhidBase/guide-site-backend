@@ -5,4 +5,3 @@ import { getMapDataFromDB } from "../controllers/navbarController.js";
 router.get("/", getMapDataFromDB);
 
 export default router;
-
