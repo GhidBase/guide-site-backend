@@ -2,17 +2,22 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-
 // Express
 import express from "express";
+import router from "./routes/router.js";
+import pagesRouter from "./routes/pagesRouter.js";
+import blocksRouter from "./routes/blocksRouter.js";
+import navbarRouter from "./routes/navbarRouter.js";
+import filesRouter from "./routes/filesRouter.js";
+import sectionsRouter from "./routes/sectionsRouter.js";
+
 import multer from "multer";
 const upload = multer({ dest: "uploads/" });
 
-
 const app = express();
 
-import gamesRouter from "./routes/gamesRouter.js"
-import indexRouter from "./routes/indexRouter.js"
+import gamesRouter from "./routes/gamesRouter.js";
+import indexRouter from "./routes/indexRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -38,6 +43,7 @@ app.use(
 app.use(passport.session());
 
 import cors from "cors";
+
 app.use(cors());
 
 // To receive JSON
@@ -49,9 +55,9 @@ app.use(express.json());
 // "extended: true" allows nested objects in the data
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/games", gamesRouter)
-app.use("/", indexRouter)
-
+app.use("/games", gamesRouter);
+app.use("/", indexRouter);
+app.use("/sections", sectionsRouter);
 
 const PORT = process.env.PORT;
 app.listen(PORT, (error) => {

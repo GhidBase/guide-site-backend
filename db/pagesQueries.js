@@ -8,9 +8,14 @@ async function getPages(gameId) {
     });
 }
 
-async function createPage(title, gameId) {
+async function createPage(title, gameId, sectionId) {
     return await prisma.page.create({
         data: { title, gameId },
+        data: {
+            title,
+            gameId,
+            section: { connect: { id: sectionId } },
+        },
     });
 }
 
