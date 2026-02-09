@@ -30,6 +30,7 @@ model Game {
   pages      Page[]
   slug       String?
   navbar     Json?
+  sections   Section[]
 }
 
 model Checklist {
@@ -70,6 +71,8 @@ model Page {
   blocks Block[]
   game   Game?    @relation(fields: [gameId], references: [id])
   gameId Int?
+  section   Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  sectionId Int?
   @@unique([slug, gameId])
 }
 
@@ -90,4 +93,15 @@ model File {
   url      String
   block    Block? @relation(fields: [blockId], references: [id])
   blockId  Int?
+}
+
+model Section {
+  id     Int    @id @default(autoincrement())
+  title  String
+  order  Int    @default(0)
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId Int
+  pages  Page[]
+
+  @@unique([gameId, title])
 }
