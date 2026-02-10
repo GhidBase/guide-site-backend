@@ -8,12 +8,12 @@ async function getPages(gameId) {
     });
 }
 
-async function createPage(title, gameId, sectionId) {
+async function createPage({ title, gameId, sectionId }) {
     return await prisma.page.create({
         data: {
             title,
-            section: { connect: { id: gameId } },
-            section: { connect: { id: sectionId } },
+            gameId,
+            sectionId,
         },
     });
 }
@@ -46,7 +46,7 @@ async function deletePageById(id, gameId) {
     });
 }
 
-async function updatePage({ id, title, slug, gameId } = {}) {
+async function updatePage({ id, title, slug, gameId, sort } = {}) {
     return await prisma.page.update({
         where: {
             id,
@@ -55,6 +55,7 @@ async function updatePage({ id, title, slug, gameId } = {}) {
         data: {
             title,
             slug,
+            sort,
         },
     });
 }

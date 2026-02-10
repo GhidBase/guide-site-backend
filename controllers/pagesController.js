@@ -8,11 +8,17 @@ async function getPages(req, res) {
 }
 
 async function postPage(req, res) {
-    const { title, sectionId } = req.body;
+    const { title } = req.body;
     const gameId = +req.params.gameId;
+    const sectionId = +req.body.sectionId;
 
     console.log("Page POST request received");
     console.log(gameId);
+    console.log({ title, gameId, sectionId });
+    if (!title || !gameId || !sectionId) {
+        console.log("error");
+        return;
+    }
     const exists = await db.checkPagesForTitle({ title, gameId });
     if (exists) {
         console.log("Page already exists");
@@ -20,11 +26,11 @@ async function postPage(req, res) {
         return;
     }
 
-    const result = await db.createPage(
+    const result = await db.createPage({
         title,
-        Number(gameId),
-        Number(sectionId),
-    );
+        gameId,
+        sectionId,
+    });
     res.send(result);
 }
 
@@ -53,7 +59,9 @@ async function updatePage(req, res) {
     const gameId = +req.params.gameId;
 
     const { title, slug } = req.body;
-    const result = await db.updatePage({ id, title, slug, gameId });
+    const sort = +req.body.sort;
+    console.log(sort);
+    const result = await db.updatePage({ id, title, slug, gameId, sort });
     console.log(result);
     res.send(result);
 }
