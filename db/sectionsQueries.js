@@ -62,3 +62,10 @@ export async function getAllSectionsByGame(gameId) {
         orderBy: { order: 'asc' }
     });
 }
+
+export async function changePageSectionRecord({ pageId, sectionId }) {
+    return await prisma.page.update({
+        where: { id: pageId },
+        data: { sectionId },
+    });
+}
