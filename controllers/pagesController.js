@@ -10,12 +10,12 @@ async function getPages(req, res) {
 async function postPage(req, res) {
     const { title } = req.body;
     const gameId = +req.params.gameId;
-    const sectionId = +req.body.sectionId;
+    const sectionId = +req.body.sectionId ? +req.body.sectionId : null;
 
     console.log("Page POST request received");
     console.log(gameId);
     console.log({ title, gameId, sectionId });
-    if (!title || !gameId || !sectionId) {
+    if (!title || !gameId) {
         console.log("error");
         return;
     }
