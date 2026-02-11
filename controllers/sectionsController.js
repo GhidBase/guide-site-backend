@@ -2,7 +2,9 @@ import createSectionRecord, {
     deleteSectionRecord,
     renameSectionRecord,
     updateSectionOrder,
-    getAllSectionsByGame,
+    // getAllSectionsByGame,
+    // above fn  was unused but i created a query in sectionsQueries.js for it, cant remember why. but nothing breaks so far i think 
+    changePageSectionRecord
 } from "../db/sectionsQueries.js";
 
 export default async function createSection(req, res) {
@@ -24,10 +26,14 @@ export default async function createSection(req, res) {
 
 export async function changePageSection(req, res) {
     const sectionId = req.body.sectionId;
-    const pageId = req.params.pageId;
+    const pageId = +req.params.id;
 
     console.log(sectionId, pageId, ": sectionId and pageId");
+
+    const result = await changePageSectionRecord({ pageId, sectionId });
+    res.send(result);
 }
+
 
 export async function deleteSection(req, res) {
     const sectionId = Number(req.params.id);
