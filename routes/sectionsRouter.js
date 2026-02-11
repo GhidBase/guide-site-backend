@@ -3,6 +3,7 @@ import createSection, {
     renameSection,
     reorderSection,
     deleteSection,
+    changePageSection,
 } from "../controllers/sectionsController.js";
 import { getNavbar } from "../controllers/navbarController.js";
 import { Router } from "express";
@@ -14,5 +15,5 @@ router.delete("/delete/:id", requireAdmin, deleteSection);
 router.put("/rename/:id", requireAdmin, renameSection);
 router.put("/reorder", requireAdmin, reorderSection);
 router.get("/navbar", getNavbar);
-
+router.put("/:id", requireAdmin, changePageSection)
 export default router;
