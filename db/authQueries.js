@@ -1,5 +1,4 @@
 import { prisma } from "../lib/prisma.js";
-import { check } from "express-validator";
 
 async function addUser(username, password, role) {
     const exists = await prisma.user.findUnique({
