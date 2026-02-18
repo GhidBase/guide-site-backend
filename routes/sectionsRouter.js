@@ -1,4 +1,4 @@
-import requireAdmin from "../config/requireAdmin.js";
+import { requireEditor } from "../config/auth.js";
 import createSection, {
     renameSection,
     reorderSection,
@@ -10,10 +10,10 @@ import { Router } from "express";
 const router = Router();
 
 // route is /sections
-router.post("/", requireAdmin, createSection);
-router.delete("/delete/:id", requireAdmin, deleteSection);
-router.put("/rename/:id", requireAdmin, renameSection);
-router.put("/reorder", requireAdmin, reorderSection);
+router.post("/", requireEditor, createSection);
+router.delete("/delete/:id", requireEditor, deleteSection);
+router.put("/rename/:id", requireEditor, renameSection);
+router.put("/reorder", requireEditor, reorderSection);
 router.get("/navbar", getNavbar);
-router.put("/:id", requireAdmin, changePageSection)
+router.put("/:id", requireEditor, changePageSection);
 export default router;
