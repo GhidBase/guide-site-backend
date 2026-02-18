@@ -6,7 +6,7 @@ import {
     GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import db from "../db/filesQueries.js";
-import pendingDb from "../db/pendingQueries";
+import pendingDb from "../db/pendingQueries.js";
 
 const s3client = new S3Client({ region: "us-east-2" });
 

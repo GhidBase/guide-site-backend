@@ -28,7 +28,7 @@ const upload = multer({
 router.get("/:blockId", blocksController.getBlock);
 router.delete("/:blockId", requireAuth, blocksController.deleteBlock);
 router.delete("/:blockId/files", requireAuth, filesController.deleteBlockFiles);
-router.put("/:blockId", requireAdmin, blocksController.updateBlock);
+router.put("/:blockId", requireAuth, blocksController.updateBlock);
 router.post(
     "/:blockId/files",
     requireAuth,
