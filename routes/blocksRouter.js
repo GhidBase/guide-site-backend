@@ -4,8 +4,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import multer from "multer";
 import multerS3 from "multer-s3";
 import filesController from "../controllers/filesController.js";
-import requireAdmin from "../config/requireAdmin.js";
-
+import { requireAuth } from "../config/auth.js";
 
 const s3client = new S3Client({ region: "us-east-2" });
 const router = Router({ mergeParams: true });
@@ -27,9 +26,14 @@ const upload = multer({
 
 // route is "/games/:gameId/blocks"
 router.get("/:blockId", blocksController.getBlock);
-router.delete("/:blockId", requireAdmin, blocksController.deleteBlock);
-router.delete("/:blockId/files", requireAdmin, filesController.deleteBlockFiles);
+router.delete("/:blockId", requireAuth, blocksController.deleteBlock);
+router.delete("/:blockId/files", requireAuth, filesController.deleteBlockFiles);
 router.put("/:blockId", requireAdmin, blocksController.updateBlock);
-router.post("/:blockId/files", requireAdmin, upload.any(), filesController.uploadFile);
+router.post(
+    "/:blockId/files",
+    requireAuth,
+    upload.any(),
+    filesController.uploadFile,
+);
 
 export default router;

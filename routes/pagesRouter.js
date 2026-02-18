@@ -1,4 +1,4 @@
-import requireAdmin from "../config/requireAdmin.js";
+import { requireAdmin, requireAuth } from "../config/auth.js";
 import pagesController from "../controllers/pagesController.js";
 
 import { Router } from "express";
@@ -10,7 +10,15 @@ router.post("/", requireAdmin, pagesController.postPage);
 router.get("/by-slug/:slug", pagesController.getPage);
 router.delete("/by-id/:pageId", requireAdmin, pagesController.deletePage);
 router.put("/by-id/:pageId", requireAdmin, pagesController.updatePage);
-router.post("/by-id/:pageId/blocks", requireAdmin, pagesController.createBlockForPage);
-router.put("/by-id/:pageId/blocks", requireAdmin, pagesController.updateBlocksForPage);
+router.post(
+    "/by-id/:pageId/blocks",
+    requireAuth,
+    pagesController.createBlockForPage,
+);
+router.put(
+    "/by-id/:pageId/blocks",
+    requireAuth,
+    pagesController.updateBlocksForPage,
+);
 
 export default router;
