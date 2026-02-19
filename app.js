@@ -42,7 +42,11 @@ app.use(passport.session());
 
 import cors from "cors";
 
-app.use(cors());
+app.use(
+    cors({
+        credentials: true,
+    }),
+);
 
 // To receive JSON
 app.use(express.json());
