@@ -130,7 +130,6 @@ async function createBlockForPage({ pageId, order, type }) {
 }
 
 async function offsetBlockOrderForPage(pageId, order) {
-    // Specifically, offsets order starting from "order", inclusive
     return await prisma.block.updateMany({
         where: {
             order: {
@@ -143,6 +142,20 @@ async function offsetBlockOrderForPage(pageId, order) {
             },
         },
     });
+}
+
+async function updatePageOrder(pageOrder, sectionId) {
+    await prisma.$transaction(
+        pageOrder.map((pageId, index) =>
+            prisma.page.update({
+                where: {
+                    id: pageId,
+                    sectionId: sectionId,
+                },
+                data: { sort: index },
+            })
+        )
+    );
 }
 
 export default {
@@ -160,4 +173,5 @@ export default {
     getPageBlocksBySlugAndGameId,
     getPageBySlugWithNoGame,
     getPagesWithoutGame,
+    updatePageOrder,
 };
