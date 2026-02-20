@@ -16,6 +16,7 @@ const app = express();
 import gamesRouter from "./routes/gamesRouter.js";
 import indexRouter from "./routes/indexRouter.js";
 import reviewRouter from "./routes/reviewRouter.js";
+import authRoutes from "./routes/authRoutes.js";
 
 // Authentication
 import session from "express-session";
@@ -62,6 +63,7 @@ app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
 app.use("/reviews", reviewRouter);
 app.use("/", indexRouter);
+app.use("/", authRoutes);
 
 const PORT = process.env.PORT;
 app.listen(PORT, (error) => {

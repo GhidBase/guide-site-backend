@@ -6,13 +6,6 @@ import gameController from "../controllers/gameController.js";
 import { validateSignup } from "../validators/authValidators.js";
 import { requireAdmin } from "../config/auth.js";
 
-router.post("/sign-up", [validateSignup, authController.addUser]);
-router.post("/log-in", authController.login);
-router.get("/log-out", authController.logout);
-router.get("/user", authController.getUser);
-router.put("/users/:userId/role", requireAdmin, authController.updateUserRole);
-router.get("/users", requireAdmin, authController.getAllUsers);
-
 // route is "/games/"
 router.get("/", gameController.getGames);
 router.get("/by-slug/:gameSlug", gameController.getGameByTitle);
