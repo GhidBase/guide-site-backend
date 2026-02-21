@@ -2,5 +2,7 @@
 node_modules/
 /generated/prisma
 notes.txt
+notes
 amazon-details.txt
 amazon-wip.txt
+database-backup-instructions
