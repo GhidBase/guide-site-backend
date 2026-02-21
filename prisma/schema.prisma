@@ -31,7 +31,6 @@ model Game {
   sections   Section[]
   slug       String?
   navbar     Json?
-  sections   Section[]
 }
 
 model Section {
@@ -111,13 +110,3 @@ model File {
   blockId  Int?
 }
 
-model Section {
-  id     Int    @id @default(autoincrement())
-  title  String
-  order  Int    @default(0)
-  game   Game   @relation(fields: [gameId], references: [id])
-  gameId Int
-  pages  Page[]
-
-  @@unique([gameId, title])
-}
