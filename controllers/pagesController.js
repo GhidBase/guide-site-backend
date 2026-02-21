@@ -1,5 +1,6 @@
 import { getGameWithSectionId } from "../db/sectionsQueries.js";
 import db from "../db/pagesQueries.js";
+
 async function getPages(req, res) {
     const gameId = +req.params.gameId;
     console.log("pages request received for gameId :" + gameId);
@@ -100,8 +101,6 @@ async function getPage(req, res) {
     const gameId = +req.params.gameId;
     const slug = req.params.slug;
     console.log("gameId: " + gameId);
-    // If the type is ID we don't want a string we want a number
-    // const pageInfo = type == "id" ? +req.params.pageInfo : req.params.pageInfo;
 
     console.log("game: " + gameId + "\n");
     let page, blocks;
@@ -114,9 +113,6 @@ async function getPage(req, res) {
         blocks = await db.getPageBlocks(page.id);
     }
 
-    // I have notFound here to help distinguish between
-    // a page not being found, and a lack of a response from the
-    // server
     let notFound = false;
     if (page == null) {
         notFound = true;
@@ -129,7 +125,6 @@ async function createBlockForPage(req, res) {
     const pageId = +req.params.pageId;
     const order = +req.body.order;
     const type = req.body.type;
-    // blank type implies it's a text block
     const result = await db.createBlockForPage({ pageId, order, type });
     console.log(result);
     res.send(result);
@@ -151,6 +146,27 @@ async function updateBlocksForPage(req, res) {
 
 async function offsetBlockOrderForPage(pageId, order) {
     const result = await db.offsetBlockOrderForPage(pageId, order);
+}
+
+export async function reorderPages(req, res) {
+    try {
+        const { sectionId, pageOrder } = req.body;
+
+        if (!Array.isArray(pageOrder) || pageOrder.length === 0) {
+            return res.status(400).json({
+                error: "pageOrder must be a non-empty array",
+            });
+        }
+
+        await db.updatePageOrder(pageOrder, sectionId);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Failed to reorder pages:", error);
+        res.status(500).json({
+            error: "Failed to reorder pages",
+        });
+    }
 }
 
 export default {

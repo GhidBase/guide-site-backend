@@ -1,10 +1,11 @@
 import requireAdmin from "../config/requireAdmin.js";
-import pagesController from "../controllers/pagesController.js";
+import pagesController, { reorderPages } from "../controllers/pagesController.js";
 
 import { Router } from "express";
 const router = Router({ mergeParams: true });
 
 // route is "/games/:gameId/pages"
+router.put("/reorder", requireAdmin, reorderPages);
 router.get("/", pagesController.getPages);
 router.post("/", requireAdmin, pagesController.postPage);
 router.get("/by-slug/:slug", pagesController.getPage);
