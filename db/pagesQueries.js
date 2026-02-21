@@ -8,9 +8,13 @@ async function getPages(gameId) {
     });
 }
 
-async function createPage(title, gameId) {
+async function createPage({ title, gameId, sectionId }) {
     return await prisma.page.create({
-        data: { title, gameId },
+        data: {
+            title,
+            gameId,
+            sectionId,
+        },
     });
 }
 
@@ -42,7 +46,7 @@ async function deletePageById(id, gameId) {
     });
 }
 
-async function updatePage({ id, title, slug, gameId } = {}) {
+async function updatePage({ id, title, slug, gameId, sort } = {}) {
     return await prisma.page.update({
         where: {
             id,
@@ -51,6 +55,7 @@ async function updatePage({ id, title, slug, gameId } = {}) {
         data: {
             title,
             slug,
+            sort,
         },
     });
 }
@@ -125,7 +130,6 @@ async function createBlockForPage({ pageId, order, type }) {
 }
 
 async function offsetBlockOrderForPage(pageId, order) {
-    // Specifically, offsets order starting from "order", inclusive
     return await prisma.block.updateMany({
         where: {
             order: {
@@ -138,6 +142,20 @@ async function offsetBlockOrderForPage(pageId, order) {
             },
         },
     });
+}
+
+async function updatePageOrder(pageOrder, sectionId) {
+    await prisma.$transaction(
+        pageOrder.map((pageId, index) =>
+            prisma.page.update({
+                where: {
+                    id: pageId,
+                    sectionId: sectionId,
+                },
+                data: { sort: index },
+            })
+        )
+    );
 }
 
 export default {
@@ -155,4 +173,5 @@ export default {
     getPageBlocksBySlugAndGameId,
     getPageBySlugWithNoGame,
     getPagesWithoutGame,
+    updatePageOrder,
 };

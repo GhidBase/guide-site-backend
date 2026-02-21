@@ -1,7 +1,46 @@
 import { prisma } from "../lib/prisma.js";
 
-async function getGames() {
+export async function getGames() {
     return await prisma.game.findMany();
 }
 
-export default { getGames };
+export async function updateNavbarData(navbarData) {
+    const result = await prisma.game.update({
+        where: {
+            id: 1, // temporary for LDG
+        },
+        data: {
+            navbar: navbarData,
+        },
+    });
+}
+
+export async function getMapData() {
+    return await prisma.game.findMany({
+        include: {
+            sections: {
+                include: {
+                    pages: true,
+                },
+            },
+        },
+    });
+}
+
+async function getAllSections() {
+    return await prisma.section.findMany();
+}
+
+async function getSectionsByGameId(gameId) {
+    const sections = await prisma.section.findMany({
+        where: { gameId },
+        include: { pages: true },
+        orderBy: { order: "asc" },
+    });
+    return sections;
+}
+
+export default {
+    getSectionsByGameId,
+    getAllSections,
+};

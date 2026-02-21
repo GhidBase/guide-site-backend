@@ -28,10 +28,23 @@ model Game {
   checklists Checklist[]
   tags       Tag[]
   pages      Page[]
+  sections   Section[]
   slug       String?
   navbar     Json?
   sections   Section[]
 }
+
+model Section {
+  id     Int    @id @default(autoincrement())
+  title  String
+  order  Int    @default(0)
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId Int
+  pages  Page[]
+
+  @@unique([gameId, title])
+}
+
 
 model Checklist {
   id             Int             @id @default(autoincrement())
@@ -65,14 +78,17 @@ model Tag {
 }
 
 model Page {
-  id     Int     @id @default(autoincrement())
-  title  String
-  slug   String?
-  blocks Block[]
-  game   Game?    @relation(fields: [gameId], references: [id])
-  gameId Int?
+  id        Int     @id @default(autoincrement())
+  title     String
+  slug      String?
+  navbarTitle String?
+  blocks    Block[]
+  game      Game?    @relation(fields: [gameId], references: [id])
+  gameId    Int?
   section   Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   sectionId Int?
+  sort Int?
+
   @@unique([slug, gameId])
 }
 
