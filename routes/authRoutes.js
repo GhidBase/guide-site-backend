@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validateSignup } from "../validators/authValidators.js";
-import authController from "../controllers/authController";
-import { requireAdmin } from "../config/auth";
+import authController from "../controllers/authController.js";
+import { requireAdmin } from "../config/auth.js";
 
 const router = Router();
 

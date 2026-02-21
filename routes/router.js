@@ -1,9 +1,7 @@
 import { Router } from "express";
 const router = Router({ mergeParams: true });
 
-import authController from "../controllers/authController.js";
 import gameController from "../controllers/gameController.js";
-import { validateSignup } from "../validators/authValidators.js";
 import { requireAdmin } from "../config/auth.js";
 
 // route is "/games/"
