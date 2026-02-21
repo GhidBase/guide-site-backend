@@ -1,12 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 
 async function addUser(username, password, role) {
-    const exists = await prisma.user.findUnique({
-        where: {
-            username: username,
-        },
-    });
-    if (exists) return;
     const result = await prisma.user.create({
         data: {
             password: password,
@@ -18,7 +12,7 @@ async function addUser(username, password, role) {
 }
 
 async function getUser(username) {
-    const result = await prisma.user.findUnique({
+    const result = await prisma.user.findFirst({
         where: {
             username: username,
         },
@@ -27,7 +21,7 @@ async function getUser(username) {
 }
 
 async function checkUserExists(username) {
-    const result = await prisma.user.findUnique({
+    const result = await prisma.user.findFirst({
         where: { username: username },
     });
     return result !== null;
