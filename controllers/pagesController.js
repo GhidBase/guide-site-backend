@@ -126,15 +126,15 @@ async function createBlockForPage(req, res) {
     const order = +req.body.order;
     const type = req.body.type;
     // blank type implies it's a text block
-    const result = await db.createBlockForPage({ pageId, order, type });
-    console.log(result);
-    res.send(result);
-    const content = req.body.content;
+    //const result = await db.createBlockForPage({ pageId, order, type });
+    //console.log(result);
+    //res.send(result);
+    //const content = req.body.content;
 
     if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
         const result = await db.createBlockForPage({ pageId, order, type });
         console.log(result);
-        res.json(result);
+        res.send(result);
     } else {
         await pendingDb.createPendingBlock({
             userId: req.user.id,
