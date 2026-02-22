@@ -137,7 +137,7 @@ model Page {
 
 model Block {
     id            Int            @id @default(autoincrement())
-    page          Page           @relation(fields: [pageId], references: [id])
+    page          Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
     pageId        Int
     content       Json?
     order         Int?
