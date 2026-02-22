@@ -40,6 +40,7 @@ async function logout(req, res, next) {
         if (err) {
             return next(err);
         }
+        res.json({ message: "Logged out successfully" });
     });
 }
 
