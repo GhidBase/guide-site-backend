@@ -1,4 +1,5 @@
 import db from "../db/blocksQueries.js";
+import pendingDb from "../db/pendingQueries.js";
 
 async function getBlock(req, res) {
     const blockId = +req.params.blockId;
@@ -12,23 +13,69 @@ async function getBlock(req, res) {
 async function deleteBlock(req, res) {
     const id = +req.params.blockId;
     const gameId = +req.params.gameId;
+    const exists = await db.getBlock({ id, gameId });
+    if (!exists) {
+        return res.status(404).json({ error: "Block not found" });
+    }
 
     console.log("Block deletion request received on block ID:" + id);
-    const result = await db.deleteBlock({ id, gameId });
-    console.log("Deleted block:");
-    console.log(result);
-    res.send(result);
+
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        const result = await db.deleteBlock({ id, gameId });
+        console.log("Deleted block:");
+        console.log(result);
+        res.status(200).json(result);
+    } else {
+        const existingPending =
+            await pendingDb.findPendingBlockByBlockIdAndOperation(id, "DELETE");
+        if (existingPending) {
+            return res.status(409).json({
+                error: "A pending deletion request for this block already exists.",
+            });
+        }
+
+        await pendingDb.createPendingBlock({
+            blockId: id,
+            userId: req.user.id,
+            operation: "DELETE",
+            type: "block-deletion-request",
+        });
+        res.status(202).json({
+            message: "Block deletion requested, pending review.",
+        });
+    }
 }
 
 async function updateBlock(req, res) {
     const id = +req.params.blockId;
     const gameId = +req.params.gameId;
-
     console.log("Block update request received for Block ID: " + id);
-    const { content, content2 } = req.body;
-    const result = await db.updateBlock({ id, content, content2, gameId });
-    console.log(result);
-    res.send(result);
+    const { content, content2, type } = req.body;
+
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        const result = await db.updateBlock({ id, content, content2, gameId });
+        console.log(result);
+        res.status(200).json(result);
+    } else {
+        const existingPending =
+            await pendingDb.findPendingBlockByBlockIdAndOperation(id, "UPDATE");
+        if (existingPending) {
+            return res.status(409).json({
+                error: "A pending update request for this block already exists.",
+            });
+        }
+
+        await pendingDb.createPendingBlock({
+            blockId: id,
+            userId: req.user.id,
+            operation: "UPDATE",
+            content: { content, content2 },
+            type: type || "block-update-request",
+        });
+        res.status(202).json({
+            message: "Block update requested, pending review.",
+        });
+    }
 }
 
 export default { deleteBlock, updateBlock, getBlock };

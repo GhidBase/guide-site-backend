@@ -4,5 +4,13 @@ node_modules/
 notes.txt
 notes
 amazon-details.txt
+<<<<<<< HEAD
 amazon-wip.txt
 database-backup-instructions
+||||||| 0d449bf
+amazon-wip.txt
+=======
+amazon-wip.txt
+database-backup-instructions
+notes
+>>>>>>> auth

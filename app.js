@@ -4,20 +4,19 @@ dotenv.config();
 
 // Express
 import express from "express";
-import router from "./routes/router.js";
-import pagesRouter from "./routes/pagesRouter.js";
-import blocksRouter from "./routes/blocksRouter.js";
 import navbarsRouter from "./routes/navbarRouter.js";
-import filesRouter from "./routes/filesRouter.js";
 import sectionsRouter from "./routes/sectionsRouter.js";
 
-import multer from "multer";
-const upload = multer({ dest: "uploads/" });
+// unused here
+// import multer from "multer";
+// const upload = multer({ dest: "uploads/" });
 
 const app = express();
 
 import gamesRouter from "./routes/gamesRouter.js";
 import indexRouter from "./routes/indexRouter.js";
+import reviewRouter from "./routes/reviewRouter.js";
+import authRoutes from "./routes/authRoutes.js";
 
 // Authentication
 import session from "express-session";
@@ -44,7 +43,12 @@ app.use(passport.session());
 
 import cors from "cors";
 
-app.use(cors());
+app.use(
+    cors({
+        origin: ["http://localhost:5173", process.env.FRONTEND_URL],
+        credentials: true,
+    }),
+);
 
 // To receive JSON
 app.use(express.json());
@@ -58,7 +62,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/games", gamesRouter);
 app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
+app.use("/reviews", reviewRouter);
 app.use("/", indexRouter);
+app.use("/", authRoutes);
 
 const PORT = process.env.PORT;
 app.listen(PORT, (error) => {

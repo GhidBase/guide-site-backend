@@ -6,6 +6,7 @@ import {
     GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import db from "../db/filesQueries.js";
+import pendingDb from "../db/pendingQueries.js";
 
 const s3client = new S3Client({ region: "us-east-2" });
 
@@ -32,11 +33,39 @@ async function uploadFile(req, res) {
     const url = file.location;
     const filename = file.key;
     const blockId = +req.params.blockId;
-    const relevantData = { title, url, filename, blockId };
-    db.createFile(relevantData);
 
-    console.log("uploading file: " + filename + " to block: " + blockId);
-    res.send(relevantData);
+    // Admin and Editors can directly upload files
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        const newFile = await db.createFile({
+            title,
+            url,
+            filename,
+            blockId,
+            status: "ACTIVE",
+        });
+        console.log("uploading file: " + filename + " to block: " + blockId);
+        res.json(newFile);
+    } else {
+        // Users have to go through a review system
+        const newFile = await db.createFile({
+            title,
+            url,
+            filename,
+            blockId: null,
+            status: "PENDING_UPLOAD",
+        });
+        await pendingDb.createPendingBlock({
+            blockId,
+            userId: req.user.id,
+            operation: "ADD_FILE",
+            content: { title, url, filename, fileId: newFile.id },
+            type: "file-upload-request",
+        });
+        res.status(202).json({
+            message: "File uploaded, pending review.",
+            file: newFile,
+        });
+    }
 }
 
 async function deleteBlockFiles(req, res) {
@@ -44,70 +73,130 @@ async function deleteBlockFiles(req, res) {
     const blockId = +req.params.blockId;
     const gameId = +req.params.gameId;
 
-    // Get list of files
-    const result = await db.getFilesByBlock({ blockId, gameId });
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        // Get list of files
+        const result = await db.getFilesByBlock({ blockId, gameId });
 
-    // List S3 names
-    const s3Urls = result.map((current) => current.filename);
+        // List S3 names
+        const s3Filenames = result.map((current) => current.filename);
 
-    // Delete them all from amazon s3
+        // Delete them all from amazon s3
 
-    console.log("Deleting S3 files");
-    const deleteS3Result = await Promise.all(
-        s3Urls.map((url) =>
-            s3client.send(
-                new DeleteObjectCommand({
-                    Bucket: "ldg-guides-images",
-                    Key: url,
+        console.log("Deleting S3 files");
+        const deleteS3Result = await Promise.all(
+            s3Filenames.map((filename) =>
+                s3client.send(
+                    new DeleteObjectCommand({
+                        Bucket: "ldg-guides-images",
+                        Key: filename,
+                    }),
+                ),
+            ),
+        );
+
+        console.log(deleteS3Result);
+
+        // Afterwards, delete all the files
+        const deletionResult = await db.deleteFilesByBlock({ blockId, gameId });
+
+        console.log(deletionResult);
+        return res.json(deletionResult);
+    } else {
+        const files = await db.getFilesByBlock({ blockId, gameId });
+        await Promise.all(
+            files.map((file) =>
+                pendingDb.createPendingBlock({
+                    blockId: blockId,
+                    userId: req.user.id,
+                    operation: "DELETE_FILE",
+                    content: {
+                        filename: file.filename,
+                        url: file.url,
+                        fileId: file.id,
+                    },
+                    type: "file-deletion-request",
                 }),
             ),
-        ),
-    );
+        );
 
-    console.log(deleteS3Result);
+        await Promise.all(
+            files.map((file) =>
+                db.updateFileStatus(file.id, "PENDING_DELETION"),
+            ),
+        );
 
-    // Afterwards, delete all the files
-    const deletionResult = await db.deleteFilesByBlock({ blockId, gameId });
-
-    console.log(deletionResult);
-    res.send(deletionResult);
+        res.status(202).json({
+            message: "File deletions requested, pending review.",
+            fileCount: files.length,
+        });
+    }
 }
 
 async function deleteFile(req, res) {
     const id = +req.params.id;
     const gameId = +req.params.gameId;
 
-    console.log("ile delete request: " + id);
+    console.log("File delete request: " + id);
 
-    const getFileResult = await db.getFile(id);
-
-    console.log(getFileResult);
-
-    const key = getFileResult.filename;
-    if (!key) {
-        return res.status(400).json({ error: "Missing file key" });
+    const fileToDelete = await db.getFile(id);
+    if (!fileToDelete) {
+        return res.status(404).json({ error: "File not found" });
     }
-    console.log(key);
 
-    const deleteFileDBResult = await db.deleteFile({ id, gameId });
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        const key = fileToDelete.filename;
+        if (!key) {
+            return res.status(400).json({ error: "Missing file key" });
+        }
+        console.log(key);
 
-    console.log("Delete file from DB response:");
-    console.log(deleteFileDBResult);
+        const deleteFileDBResult = await db.deleteFile({ id, gameId });
 
-    const deleteFileS3Result = await s3client.send(
-        new DeleteObjectCommand({
-            Bucket: "ldg-guides-images",
-            Key: key,
-        }),
-    );
+        console.log("Delete file from DB response:");
+        console.log(deleteFileDBResult);
 
-    console.log(
-        "Delete file from S3 response (success message doesn't indicate deletion)",
-    );
-    console.log(deleteFileS3Result);
+        const deleteFileS3Result = await s3client.send(
+            new DeleteObjectCommand({
+                Bucket: "ldg-guides-images",
+                Key: key,
+            }),
+        );
 
-    console.log("End of deletion request");
-    res.send(getFileResult);
+        console.log(
+            "Delete file from S3 response (success message doesn't indicate deletion)",
+        );
+        console.log(deleteFileS3Result);
+
+        console.log("End of deletion request");
+        res.status(200).json({
+            message: "File deleted successfully",
+            file: fileToDelete,
+        });
+    } else {
+        if (fileToDelete.status === "PENDING_DELETION") {
+            return res.status(409).json({
+                message: "File already has a pending deletion request.",
+            });
+        }
+
+        await pendingDb.createPendingBlock({
+            blockId: fileToDelete.blockId,
+            userId: req.user.id,
+            operation: "DELETE_FILE",
+            content: {
+                filename: fileToDelete.filename,
+                url: fileToDelete.url,
+                fileId: fileToDelete.id,
+            },
+            type: "file-deletion-request",
+        });
+
+        await db.updateFileStatus(id, "PENDING_DELETION");
+        res.status(202).json({
+            message: "File deletion requested, pending review.",
+            file: fileToDelete,
+        });
+    }
 }
 
 // Replacing this with a script that just fetches file data from

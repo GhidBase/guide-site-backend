@@ -1,5 +1,5 @@
-import { getGameWithSectionId } from "../db/sectionsQueries.js";
 import db from "../db/pagesQueries.js";
+import pendingDb from "../db/pendingQueries.js";
 
 async function getPages(req, res) {
     const gameId = +req.params.gameId;
@@ -125,27 +125,57 @@ async function createBlockForPage(req, res) {
     const pageId = +req.params.pageId;
     const order = +req.body.order;
     const type = req.body.type;
+    // blank type implies it's a text block
     const result = await db.createBlockForPage({ pageId, order, type });
     console.log(result);
     res.send(result);
+    const content = req.body.content;
+
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        const result = await db.createBlockForPage({ pageId, order, type });
+        console.log(result);
+        res.json(result);
+    } else {
+        await pendingDb.createPendingBlock({
+            userId: req.user.id,
+            operation: "CREATE",
+            content: { order, type, pageId, content },
+            type: "block-creation-request",
+        });
+        res.status(202).json({
+            message: "Block creation requested, pending review.",
+        });
+    }
 }
 
 async function updateBlocksForPage(req, res) {
     const pageId = +req.params.pageId;
     const updateType = req.body.type;
-    const gameId = +req.params.gameId;
     const order = +req.body.order;
     console.log("Received request to update blocks for page " + pageId);
     console.log(updateType);
-    let result;
-    if (updateType == "offset") {
-        result = await offsetBlockOrderForPage(pageId, order);
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        let result;
+        if (updateType === "offset") {
+            result = await offsetBlockOrderForPage(pageId, order);
+        }
+        res.send(result);
+    } else {
+        await pendingDb.createPendingBlock({
+            userId: req.user.id,
+            operation: "UPDATE",
+            content: { updateType, order, pageId },
+            type: "block-order-update-request",
+        });
+        res.status(202).json({
+            message: "Block order update requested, pending review.",
+        });
     }
-    res.send(result);
 }
 
 async function offsetBlockOrderForPage(pageId, order) {
     const result = await db.offsetBlockOrderForPage(pageId, order);
+    return result;
 }
 
 export async function reorderPages(req, res) {

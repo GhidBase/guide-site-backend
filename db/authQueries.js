@@ -1,37 +1,30 @@
 import { prisma } from "../lib/prisma.js";
-import { check } from "express-validator";
 
-async function addUser(username, password) {
-    const exists = await prisma.user.findFirst({
-        where: {
-            username: username,
-        },
-    });
-    if (exists) return;
+async function addUser(username, password, role) {
     const result = await prisma.user.create({
         data: {
             password: password,
             username: username,
+            role: role,
         },
     });
     return result;
 }
 
 async function getUser(username) {
-    const result = await prisma.user.findMany({
+    const result = await prisma.user.findFirst({
         where: {
             username: username,
         },
     });
-    if (result.length > 1 || result.length == 0) return false;
-    return result[0];
+    return result;
 }
 
 async function checkUserExists(username) {
-    const result = await prisma.user.findMany({
+    const result = await prisma.user.findFirst({
         where: { username: username },
     });
-    return result.length > 0;
+    return result !== null;
 }
 
 async function getUserById(id) {
@@ -43,9 +36,33 @@ async function getUserById(id) {
     return result;
 }
 
+async function updateUserRole(id, newRole) {
+    return await prisma.user.update({
+        where: {
+            id: id,
+        },
+        data: {
+            role: newRole,
+        },
+    });
+}
+
+async function getAllUsers() {
+    const result = await prisma.user.findMany({
+        select: {
+            id: true,
+            username: true,
+            role: true,
+        },
+    });
+    return result;
+}
+
 export default {
     addUser,
     getUser,
     getUserById,
     checkUserExists,
+    updateUserRole,
+    getAllUsers,
 };

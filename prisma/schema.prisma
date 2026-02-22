@@ -1,112 +1,166 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+    provider = "postgresql"
 }
 
 model Session {
-  id        String   @id
-  sid       String   @unique
-  data      String // MediumText may be needed for MySql
-  expiresAt DateTime
+    id        String   @id
+    sid       String   @unique
+    data      String
+    expiresAt DateTime
+}
+
+enum Role {
+    ADMIN
+    EDITOR
+    USER
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String? @unique
-  name     String?
-  username String
-  password String
+    id             Int            @id @default(autoincrement())
+    email          String?        @unique
+    name           String?
+    username       String         @unique
+    password       String
+    role           Role           @default(USER)
+    pendingBlocks  PendingBlock[]
+    reviewedBlocks PendingBlock[] @relation("ReviewedBlocks")
+}
+
+enum ReviewStatus {
+    PENDING
+    ACCEPTED
+    REFUSED
+}
+
+enum PendingOperationType {
+    CREATE
+    UPDATE
+    DELETE
+    ADD_FILE
+    DELETE_FILE
+}
+
+model PendingBlock {
+    id            Int                  @id @default(autoincrement())
+    block         Block?               @relation(fields: [blockId], references: [id], onDelete: Cascade)
+    blockId       Int?
+    content       Json?
+    type          String?
+    user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId        Int
+    status        ReviewStatus         @default(PENDING)
+    createdAt     DateTime             @default(now())
+    updatedAt     DateTime             @updatedAt
+    reviewerId    Int?
+    reviewer      User?                @relation("ReviewedBlocks", fields: [reviewerId], references: [id], onDelete: SetNull)
+    reviewedAt    DateTime?
+    reviewMessage String?
+    operation     PendingOperationType @default(UPDATE)
+
+    @@index([status])
+    @@index([userId])
+    @@index([blockId])
 }
 
 model Game {
-  id         Int         @id @default(autoincrement())
-  title      String      @unique
-  checklists Checklist[]
-  tags       Tag[]
-  pages      Page[]
-  sections   Section[]
-  slug       String?
-  navbar     Json?
+    id         Int         @id @default(autoincrement())
+    title      String      @unique
+    checklists Checklist[]
+    tags       Tag[]
+    pages      Page[]
+    sections   Section[]
+    slug       String?
+    navbar     Json?
 }
 
 model Section {
-  id     Int    @id @default(autoincrement())
-  title  String
-  order  Int    @default(0)
-  game   Game   @relation(fields: [gameId], references: [id])
-  gameId Int
-  pages  Page[]
+    id     Int    @id @default(autoincrement())
+    title  String
+    order  Int    @default(0)
+    game   Game   @relation(fields: [gameId], references: [id])
+    gameId Int
+    pages  Page[]
 
-  @@unique([gameId, title])
+    @@unique([gameId, title])
 }
 
-
 model Checklist {
-  id             Int             @id @default(autoincrement())
-  title          String
-  game           Game            @relation(fields: [gameId], references: [id])
-  gameId         Int
-  checklistItems ChecklistItem[]
-  configuration  String? // The layout of the checklist, e.g. "Flea Hunting Checklist" to be read by the frontend
+    id             Int             @id @default(autoincrement())
+    title          String
+    game           Game            @relation(fields: [gameId], references: [id])
+    gameId         Int
+    checklistItems ChecklistItem[]
+    configuration  String? // The layout of the checklist, e.g. "Flea Hunting Checklist" to be read by the frontend
 
-  @@unique([gameId, title])
+    @@unique([gameId, title])
 }
 
 model ChecklistItem {
-  id          Int       @id @default(autoincrement())
-  title       String
-  checklist   Checklist @relation(fields: [checklistId], references: [id])
-  checklistId Int
-  imageOne    String?
-  imageTwo    String?
-  description String?
-  tags        Tag[]
+    id          Int       @id @default(autoincrement())
+    title       String
+    checklist   Checklist @relation(fields: [checklistId], references: [id])
+    checklistId Int
+    imageOne    String?
+    imageTwo    String?
+    description String?
+    tags        Tag[]
 
-  @@unique([checklistId, title])
+    @@unique([checklistId, title])
 }
 
 model Tag {
-  id             Int             @id @default(autoincrement())
-  title          String          @unique
-  checklistItems ChecklistItem[]
-  games          Game[]
+    id             Int             @id @default(autoincrement())
+    title          String          @unique
+    checklistItems ChecklistItem[]
+    games          Game[]
 }
 
 model Page {
-  id        Int     @id @default(autoincrement())
-  title     String
-  slug      String?
-  navbarTitle String?
-  blocks    Block[]
-  game      Game?    @relation(fields: [gameId], references: [id])
-  gameId    Int?
-  section   Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  sectionId Int?
-  sort Int?
+    id          Int      @id @default(autoincrement())
+    title       String
+    slug        String?
+    navbarTitle String?
+    blocks      Block[]
+    game        Game?    @relation(fields: [gameId], references: [id])
+    gameId      Int?
+    section     Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+    sectionId   Int?
+    sort        Int?
 
-  @@unique([slug, gameId])
+    @@unique([slug, gameId])
 }
 
 model Block {
-  id      Int     @id @default(autoincrement())
-  page    Page    @relation(fields: [pageId], references: [id])
-  pageId  Int
-  content Json?
-  order   Int?
-  type    String?
-  files   File[]
+    id            Int            @id @default(autoincrement())
+    page          Page           @relation(fields: [pageId], references: [id])
+    pageId        Int
+    content       Json?
+    order         Int?
+    type          String?
+    files         File[]
+    pendingBlocks PendingBlock[]
+}
+
+enum FileStatus {
+    PENDING_UPLOAD
+    ACTIVE
+    PENDING_DELETION
+    DELETED
 }
 
 model File {
-  id       Int    @id @default(autoincrement())
-  title    String
-  filename String
-  url      String
-  block    Block? @relation(fields: [blockId], references: [id])
-  blockId  Int?
+    id        Int        @id @default(autoincrement())
+    title     String
+    filename  String
+    url       String
+    block     Block?     @relation(fields: [blockId], references: [id], onDelete: Cascade)
+    blockId   Int?
+    status    FileStatus @default(PENDING_UPLOAD)
+    createdAt DateTime   @default(now())
 }
 
