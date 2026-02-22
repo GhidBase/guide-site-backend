@@ -2,6 +2,7 @@ export function requireAuth(req, res, next) {
     if (req.isAuthenticated()) {
         next();
     } else {
+        console.log("not authenticated")
         res.status(403).json({ message: "Not authenticated" });
     }
 }

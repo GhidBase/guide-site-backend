@@ -46,6 +46,7 @@ async function checkPageById(id, gameId) {
 }
 
 async function deletePageById(id, gameId) {
+    console.log(id, gameId);
     return await prisma.page.delete({
         where: {
             id,
