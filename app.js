@@ -25,6 +25,8 @@ import "./config/passport.js";
 import { prisma } from "./lib/prisma.js";
 import { PrismaSessionStore } from "@quixo3/prisma-session-store";
 
+app.set("trust proxy", 1);
+
 app.use(
     session({
         cookie: {
