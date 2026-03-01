@@ -29,8 +29,8 @@ app.use(
     session({
         cookie: {
             maxAge: 30 * 24 * 60 * 60 * 1000,
-            sameSite: "none"
-            secure: true
+            sameSite: "none",
+            secure: true,
         },
         secret: process.env.SESSION_SECRET,
         resave: false,
