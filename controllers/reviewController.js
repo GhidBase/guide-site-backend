@@ -103,6 +103,15 @@ async function acceptReview(req, res) {
             reviewMessage: message || null,
         });
 
+        // Record contributor credit
+        const pageId =
+            pending.operation === "CREATE"
+                ? pending.content?.pageId
+                : pending.block?.pageId;
+        if (pageId) {
+            await pagesDb.addContributor({ pageId, userId: pending.userId });
+        }
+
         res.json({
             message: "Review accepted successfully",
             reviewId,

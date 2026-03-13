@@ -1,5 +1,6 @@
 import db from "../db/blocksQueries.js";
 import pendingDb from "../db/pendingQueries.js";
+import pagesDb from "../db/pagesQueries.js";
 
 async function getBlock(req, res) {
     const blockId = +req.params.blockId;
@@ -55,6 +56,7 @@ async function updateBlock(req, res) {
     if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
         const result = await db.updateBlock({ id, content, content2, gameId });
         console.log(result);
+        await pagesDb.addContributor({ pageId: result.pageId, userId: req.user.id });
         res.status(200).json(result);
     } else {
         const existingPending =

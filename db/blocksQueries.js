@@ -33,6 +33,7 @@ async function updateBlock({ id, content, content2, gameId }) {
                 content2,
             },
         },
+        select: { id: true, pageId: true },
     });
 }
 

@@ -112,6 +112,22 @@ async function getPageBySlugAndGameId({ slug, gameId }) {
                 gameId,
             },
         },
+        include: {
+            contributors: {
+                select: { id: true, username: true },
+            },
+        },
+    });
+}
+
+async function addContributor({ pageId, userId }) {
+    return await prisma.page.update({
+        where: { id: pageId },
+        data: {
+            contributors: {
+                connect: { id: userId },
+            },
+        },
     });
 }
 
@@ -185,4 +201,5 @@ export default {
     getPageBySlugWithNoGame,
     getPagesWithoutGame,
     updatePageOrder,
+    addContributor,
 };

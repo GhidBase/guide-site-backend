@@ -21,14 +21,15 @@ enum Role {
 }
 
 model User {
-    id             Int            @id @default(autoincrement())
-    email          String?        @unique
-    name           String?
-    username       String         @unique
-    password       String
-    role           Role           @default(USER)
-    pendingBlocks  PendingBlock[]
-    reviewedBlocks PendingBlock[] @relation("ReviewedBlocks")
+    id                Int            @id @default(autoincrement())
+    email             String?        @unique
+    name              String?
+    username          String         @unique
+    password          String
+    role              Role           @default(USER)
+    pendingBlocks     PendingBlock[]
+    reviewedBlocks    PendingBlock[] @relation("ReviewedBlocks")
+    contributedPages  Page[]         @relation("PageContributors")
 }
 
 enum ReviewStatus {
@@ -133,7 +134,8 @@ model Page {
     gameId      Int?
     section     Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
     sectionId   Int?
-    sort        Int?
+    sort         Int?
+    contributors User[]   @relation("PageContributors")
 
     @@unique([slug, gameId])
 }
