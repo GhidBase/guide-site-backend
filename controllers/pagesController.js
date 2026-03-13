@@ -59,10 +59,10 @@ async function updatePage(req, res) {
     const id = +req.params.pageId;
     const gameId = +req.params.gameId;
 
-    const { title, slug } = req.body;
+    const { title, slug, description } = req.body;
     const sort = +req.body.sort;
     console.log(sort);
-    const result = await db.updatePage({ id, title, slug, gameId, sort });
+    const result = await db.updatePage({ id, title, slug, gameId, sort, description });
     console.log(result);
     res.send(result);
 }

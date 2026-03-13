@@ -12,6 +12,7 @@ router.get("/by-id/:gameId", gameController.getGame);
 // There's no interface for these yet, revisit later
 router.post("/", requireAdmin, gameController.postGame); //wip
 router.put("/:gameId", requireAdmin, gameController.updateGame);
+router.put("/:gameId/theme", requireAdmin, gameController.updateTheme);
 router.get("/games/:gameId/checklists", gameController.getChecklists);
 router.post(
     "/games/:gameId/checklists",

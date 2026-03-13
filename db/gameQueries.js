@@ -39,6 +39,13 @@ async function updateGame({ title, id, slug, navbar }) {
     });
 }
 
+async function updateGameTheme({ id, theme }) {
+    return await prisma.game.update({
+        where: { id },
+        data: { theme },
+    });
+}
+
 async function getChecklists(gameId) {
     return await prisma.checklist.findMany({
         where: {
@@ -139,6 +146,7 @@ async function unlinkItemAndTag({ itemId, tagId }) {
 export default {
     getGames,
     createGame,
+    updateGameTheme,
     createChecklist,
     getChecklists,
     getChecklistItems,

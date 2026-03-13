@@ -76,6 +76,7 @@ model Game {
     sections   Section[]
     slug       String?
     navbar     Json?
+    theme      Json?
 }
 
 model Section {
@@ -125,6 +126,7 @@ model Page {
     title       String
     slug        String?
     navbarTitle String?
+    description String?
     blocks      Block[]
     game        Game?    @relation(fields: [gameId], references: [id])
     gameId      Int?

@@ -38,6 +38,13 @@ async function postGame(req, res) {
     res.status(200).send(game);
 }
 
+async function updateTheme(req, res) {
+    const id = +req.params.gameId;
+    const theme = req.body.theme;
+    const result = await db.updateGameTheme({ id, theme });
+    res.send(result);
+}
+
 async function updateGame(req, res) {
     console.log("Updating game");
     const id = +req.params.gameId;
@@ -135,6 +142,7 @@ async function deleteItemAndTagConnection(req, res) {
 export default {
     getGames,
     postGame,
+    updateTheme,
     postChecklist,
     getChecklists,
     getChecklistItems,
