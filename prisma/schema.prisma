@@ -77,6 +77,7 @@ model Game {
     slug       String?
     navbar     Json?
     theme      Json?
+    discordUrl String?
 }
 
 model Section {
