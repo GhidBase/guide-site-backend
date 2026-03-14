@@ -81,6 +81,7 @@ model Game {
     theme         Json?
     discordUrl    String?
     contributions Contribution[]
+    images        GameImage[]
 }
 
 model Section {
@@ -159,6 +160,19 @@ enum FileStatus {
     ACTIVE
     PENDING_DELETION
     DELETED
+}
+
+model GameImage {
+    id        Int      @id @default(autoincrement())
+    title     String
+    filename  String
+    url       String
+    category  String?
+    game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    gameId    Int
+    createdAt DateTime @default(now())
+
+    @@index([gameId])
 }
 
 model Contribution {
