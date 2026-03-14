@@ -1,4 +1,5 @@
 import db from "../db/gameQueries.js";
+import contributionDb from "../db/contributionQueries.js";
 
 async function getGames(req, res) {
     console.log("Fetching list of games");
@@ -140,10 +141,23 @@ async function deleteItemAndTagConnection(req, res) {
     res.send(checklistItem2);
 }
 
+async function getLeaderboard(req, res) {
+    const gameId = +req.params.gameId;
+    const leaderboard = await contributionDb.getLeaderboard(gameId);
+    res.json(leaderboard);
+}
+
+async function getGlobalLeaderboard(req, res) {
+    const leaderboard = await contributionDb.getGlobalLeaderboard();
+    res.json(leaderboard);
+}
+
 export default {
     getGames,
     postGame,
     updateTheme,
+    getLeaderboard,
+    getGlobalLeaderboard,
     postChecklist,
     getChecklists,
     getChecklistItems,

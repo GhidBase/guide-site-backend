@@ -30,6 +30,7 @@ model User {
     pendingBlocks     PendingBlock[]
     reviewedBlocks    PendingBlock[] @relation("ReviewedBlocks")
     contributedPages  Page[]         @relation("PageContributors")
+    contributions     Contribution[]
 }
 
 enum ReviewStatus {
@@ -75,10 +76,11 @@ model Game {
     tags       Tag[]
     pages      Page[]
     sections   Section[]
-    slug       String?
-    navbar     Json?
-    theme      Json?
-    discordUrl String?
+    slug          String?
+    navbar        Json?
+    theme         Json?
+    discordUrl    String?
+    contributions Contribution[]
 }
 
 model Section {
@@ -134,8 +136,9 @@ model Page {
     gameId      Int?
     section     Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
     sectionId   Int?
-    sort         Int?
-    contributors User[]   @relation("PageContributors")
+    sort          Int?
+    contributors  User[]         @relation("PageContributors")
+    contributions Contribution[]
 
     @@unique([slug, gameId])
 }
@@ -156,6 +159,19 @@ enum FileStatus {
     ACTIVE
     PENDING_DELETION
     DELETED
+}
+
+model Contribution {
+    id        Int      @id @default(autoincrement())
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    Int
+    page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+    pageId    Int
+    game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    gameId    Int
+    createdAt DateTime @default(now())
+
+    @@index([gameId, userId])
 }
 
 model File {

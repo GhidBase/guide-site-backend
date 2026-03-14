@@ -2,6 +2,7 @@ import pendingDb from "../db/pendingQueries.js";
 import filesDb from "../db/filesQueries.js";
 import blocksDb from "../db/blocksQueries.js";
 import pagesDb from "../db/pagesQueries.js";
+import contributionDb from "../db/contributionQueries.js";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const s3client = new S3Client({ region: "us-east-2" });
@@ -109,7 +110,15 @@ async function acceptReview(req, res) {
                 ? pending.content?.pageId
                 : pending.block?.pageId;
         if (pageId) {
+            const page = await pagesDb.getPage(pageId);
             await pagesDb.addContributor({ pageId, userId: pending.userId });
+            if (page?.gameId) {
+                await contributionDb.createContribution({
+                    userId: pending.userId,
+                    pageId,
+                    gameId: page.gameId,
+                });
+            }
         }
 
         res.json({

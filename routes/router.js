@@ -8,6 +8,7 @@ import { requireAdmin } from "../config/auth.js";
 router.get("/", gameController.getGames);
 router.get("/by-slug/:gameSlug", gameController.getGameByTitle);
 router.get("/by-id/:gameId", gameController.getGame);
+router.get("/by-id/:gameId/leaderboard", gameController.getLeaderboard);
 
 // There's no interface for these yet, revisit later
 router.post("/", requireAdmin, gameController.postGame); //wip
