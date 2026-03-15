@@ -31,6 +31,8 @@ model User {
     reviewedBlocks    PendingBlock[] @relation("ReviewedBlocks")
     contributedPages  Page[]         @relation("PageContributors")
     contributions     Contribution[]
+    comments          Comment[]
+    commentUpvotes    CommentUpvote[]
 }
 
 enum ReviewStatus {
@@ -140,6 +142,7 @@ model Page {
     sort          Int?
     contributors  User[]         @relation("PageContributors")
     contributions Contribution[]
+    comments      Comment[]
 
     @@unique([slug, gameId])
 }
@@ -197,5 +200,35 @@ model File {
     blockId   Int?
     status    FileStatus @default(PENDING_UPLOAD)
     createdAt DateTime   @default(now())
+}
+
+model Comment {
+    id          Int             @id @default(autoincrement())
+    page        Page            @relation(fields: [pageId], references: [id], onDelete: Cascade)
+    pageId      Int
+    user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId      Int
+    username    String
+    text        String
+    createdAt   DateTime        @default(now())
+    updatedAt   DateTime        @updatedAt
+    parent      Comment?        @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+    parentId    Int?
+    replies     Comment[]       @relation("CommentReplies")
+    upvotes     CommentUpvote[]
+
+    @@index([pageId])
+    @@index([parentId])
+}
+
+model CommentUpvote {
+    id        Int     @id @default(autoincrement())
+    comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+    commentId Int
+    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    Int
+
+    @@unique([commentId, userId])
+    @@index([commentId])
 }
 
