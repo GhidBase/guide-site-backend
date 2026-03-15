@@ -22,17 +22,16 @@ async function deleteBlock({ id, gameId }) {
 }
 
 async function updateBlock({ id, content, content2, gameId }) {
+    const contentData =
+        content !== null && typeof content === "object"
+            ? content
+            : { type: "richText", content, content2 };
+
     return await prisma.block.update({
         where: {
             id, page: { gameId }
         },
-        data: {
-            content: {
-                type: "richText",
-                content,
-                content2,
-            },
-        },
+        data: { content: contentData },
         select: { id: true, pageId: true },
     });
 }
