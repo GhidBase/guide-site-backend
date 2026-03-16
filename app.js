@@ -17,6 +17,7 @@ import gamesRouter from "./routes/gamesRouter.js";
 import indexRouter from "./routes/indexRouter.js";
 import reviewRouter from "./routes/reviewRouter.js";
 import authRoutes from "./routes/authRoutes.js";
+import commentsRouter from "./routes/commentsRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -31,8 +32,8 @@ app.use(
     session({
         cookie: {
             maxAge: 30 * 24 * 60 * 60 * 1000,
-            sameSite: "none",
-            secure: true,
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            secure: process.env.NODE_ENV === "production",
         },
         secret: process.env.SESSION_SECRET,
         resave: false,
@@ -69,6 +70,7 @@ app.use("/games", gamesRouter);
 app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
 app.use("/reviews", reviewRouter);
+app.use("/", commentsRouter);
 app.use("/", indexRouter);
 app.use("/", authRoutes);
 
