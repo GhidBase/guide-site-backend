@@ -175,10 +175,16 @@ model Board {
     name    String
     rows    Int
     cols    Int
-    bgImage    String?
-    bgSize     String? @default("cover")
-    bgX        Int?    @default(0)
-    bgY        Int?    @default(0)
+    bgImage     String?
+    bgSize      String? @default("cover")
+    bgX         Int?    @default(0)
+    bgY         Int?    @default(0)
+    heightScale Float?  @default(1.0)
+    widthScale  Float?  @default(1.0)
+    bgPaddingX  Int?    @default(0)
+    bgPaddingY  Int?    @default(0)
+    gridOffsetX Int?    @default(0)
+    gridOffsetY Int?    @default(0)
 
     @@index([gameId])
 }

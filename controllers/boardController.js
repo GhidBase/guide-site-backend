@@ -8,17 +8,17 @@ async function getBoards(req, res) {
 
 async function createBoard(req, res) {
     const gameId = +req.params.gameId;
-    const { name, rows, cols, bgImage, bgSize, bgX, bgY } = req.body;
+    const { name, rows, cols, bgImage, bgSize, bgX, bgY, heightScale, widthScale, bgPaddingX, bgPaddingY, gridOffsetX, gridOffsetY } = req.body;
     if (!name || !rows || !cols) {
         return res.status(400).json({ error: "name, rows, and cols are required" });
     }
-    const board = await db.createBoard({ gameId, name, rows: +rows, cols: +cols, bgImage, bgSize, bgX: bgX !== undefined ? +bgX : undefined, bgY: bgY !== undefined ? +bgY : undefined });
+    const board = await db.createBoard({ gameId, name, rows: +rows, cols: +cols, bgImage, bgSize, bgX: bgX !== undefined ? +bgX : undefined, bgY: bgY !== undefined ? +bgY : undefined, heightScale: heightScale !== undefined ? +heightScale : undefined, widthScale: widthScale !== undefined ? +widthScale : undefined, bgPaddingX: bgPaddingX !== undefined ? +bgPaddingX : undefined, bgPaddingY: bgPaddingY !== undefined ? +bgPaddingY : undefined, gridOffsetX: gridOffsetX !== undefined ? +gridOffsetX : undefined, gridOffsetY: gridOffsetY !== undefined ? +gridOffsetY : undefined });
     res.status(201).json(board);
 }
 
 async function updateBoard(req, res) {
     const id = +req.params.boardId;
-    const { name, rows, cols, bgImage, bgSize, bgX, bgY } = req.body;
+    const { name, rows, cols, bgImage, bgSize, bgX, bgY, heightScale, widthScale, bgPaddingX, bgPaddingY, gridOffsetX, gridOffsetY } = req.body;
     const board = await db.updateBoard({
         id,
         name,
@@ -28,6 +28,12 @@ async function updateBoard(req, res) {
         bgSize,
         bgX: bgX !== undefined ? +bgX : undefined,
         bgY: bgY !== undefined ? +bgY : undefined,
+        heightScale: heightScale !== undefined ? +heightScale : undefined,
+        widthScale: widthScale !== undefined ? +widthScale : undefined,
+        bgPaddingX: bgPaddingX !== undefined ? +bgPaddingX : undefined,
+        bgPaddingY: bgPaddingY !== undefined ? +bgPaddingY : undefined,
+        gridOffsetX: gridOffsetX !== undefined ? +gridOffsetX : undefined,
+        gridOffsetY: gridOffsetY !== undefined ? +gridOffsetY : undefined,
     });
     res.json(board);
 }

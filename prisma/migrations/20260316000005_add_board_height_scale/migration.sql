@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Board" ADD COLUMN "heightScale" DOUBLE PRECISION DEFAULT 1.0;
