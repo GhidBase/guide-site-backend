@@ -18,6 +18,7 @@ import indexRouter from "./routes/indexRouter.js";
 import reviewRouter from "./routes/reviewRouter.js";
 import authRoutes from "./routes/authRoutes.js";
 import commentsRouter from "./routes/commentsRouter.js";
+import searchRouter from "./routes/searchRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -71,6 +72,7 @@ app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
 app.use("/reviews", reviewRouter);
 app.use("/", commentsRouter);
+app.use("/", searchRouter);
 app.use("/", indexRouter);
 app.use("/", authRoutes);
 
