@@ -82,8 +82,11 @@ model Game {
     navbar        Json?
     theme         Json?
     discordUrl    String?
-    contributions Contribution[]
-    images        GameImage[]
+    contributions  Contribution[]
+    images         GameImage[]
+    unitCategories UnitCategory[]
+    units          Unit[]
+    boards         Board[]
 }
 
 model Section {
@@ -163,6 +166,42 @@ enum FileStatus {
     ACTIVE
     PENDING_DELETION
     DELETED
+}
+
+model Board {
+    id      Int     @id @default(autoincrement())
+    gameId  Int
+    game    Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    name    String
+    rows    Int
+    cols    Int
+    bgImage String?
+
+    @@index([gameId])
+}
+
+model UnitCategory {
+    id     Int    @id @default(autoincrement())
+    name   String
+    order  Int    @default(0)
+    gameId Int
+    game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    units  Unit[]
+
+    @@index([gameId])
+}
+
+model Unit {
+    id         Int          @id @default(autoincrement())
+    name       String
+    imageUrl   String
+    categoryId Int
+    category   UnitCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    gameId     Int
+    game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+    @@index([gameId])
+    @@index([categoryId])
 }
 
 model GameImage {
