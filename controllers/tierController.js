@@ -78,9 +78,11 @@ export async function deleteTierTier(req, res) {
 
 export async function createTierEntry(req, res) {
     const modeId = +req.params.modeId;
-    const { tierId, itemId, order } = req.body;
+    const { tierId, itemId } = req.body;
     if (!tierId || !itemId) return res.status(400).json({ error: "tierId and itemId are required" });
-    res.status(201).json(await db.createTierEntry({ modeId, tierId: +tierId, itemId: +itemId, order: order ?? 0 }));
+    const existing = await db.getTierEntriesInMode({ modeId, itemId: +itemId });
+    if (existing) return res.status(409).json({ error: "Item already placed in this mode" });
+    res.status(201).json(await db.createTierEntry({ modeId, tierId: +tierId, itemId: +itemId }));
 }
 
 export async function deleteTierEntry(req, res) {
