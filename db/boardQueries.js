@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 
 async function getBoards(gameId) {
-    return await prisma.board.findMany({ where: { gameId } });
+    return await prisma.board.findMany({ where: { gameId }, orderBy: { order: "asc" } });
 }
 
 async function createBoard({ gameId, name, rows, cols, bgImage, bgSize, bgX, bgY, heightScale, widthScale, bgPaddingX, bgPaddingY, gridOffsetX, gridOffsetY }) {
@@ -10,7 +10,7 @@ async function createBoard({ gameId, name, rows, cols, bgImage, bgSize, bgX, bgY
     });
 }
 
-async function updateBoard({ id, name, rows, cols, bgImage, bgSize, bgX, bgY, heightScale, widthScale, bgPaddingX, bgPaddingY, gridOffsetX, gridOffsetY }) {
+async function updateBoard({ id, name, rows, cols, bgImage, bgSize, bgX, bgY, heightScale, widthScale, bgPaddingX, bgPaddingY, gridOffsetX, gridOffsetY, order }) {
     return await prisma.board.update({
         where: { id },
         data: {
@@ -27,6 +27,7 @@ async function updateBoard({ id, name, rows, cols, bgImage, bgSize, bgX, bgY, he
             ...(bgPaddingY !== undefined && { bgPaddingY }),
             ...(gridOffsetX !== undefined && { gridOffsetX }),
             ...(gridOffsetY !== undefined && { gridOffsetY }),
+            ...(order !== undefined && { order }),
         },
     });
 }

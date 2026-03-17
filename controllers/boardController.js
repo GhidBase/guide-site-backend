@@ -18,7 +18,7 @@ async function createBoard(req, res) {
 
 async function updateBoard(req, res) {
     const id = +req.params.boardId;
-    const { name, rows, cols, bgImage, bgSize, bgX, bgY, heightScale, widthScale, bgPaddingX, bgPaddingY, gridOffsetX, gridOffsetY } = req.body;
+    const { name, rows, cols, bgImage, bgSize, bgX, bgY, heightScale, widthScale, bgPaddingX, bgPaddingY, gridOffsetX, gridOffsetY, order } = req.body;
     const board = await db.updateBoard({
         id,
         name,
@@ -34,6 +34,7 @@ async function updateBoard(req, res) {
         bgPaddingY: bgPaddingY !== undefined ? +bgPaddingY : undefined,
         gridOffsetX: gridOffsetX !== undefined ? +gridOffsetX : undefined,
         gridOffsetY: gridOffsetY !== undefined ? +gridOffsetY : undefined,
+        order: order !== undefined ? +order : undefined,
     });
     res.json(board);
 }
