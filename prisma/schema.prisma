@@ -82,8 +82,13 @@ model Game {
     navbar        Json?
     theme         Json?
     discordUrl    String?
-    contributions Contribution[]
-    images        GameImage[]
+    contributions       Contribution[]
+    images              GameImage[]
+    unitCategories      UnitCategory[]
+    units               Unit[]
+    boards              Board[]
+    showSupportButton   Boolean        @default(true)
+    tierCategories      TierCategory[]
 }
 
 model Section {
@@ -163,6 +168,115 @@ enum FileStatus {
     ACTIVE
     PENDING_DELETION
     DELETED
+}
+
+model TierCategory {
+    id      Int        @id @default(autoincrement())
+    gameId  Int
+    game    Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    name    String
+    order   Int        @default(0)
+    items   TierItem[]
+    modes   TierMode[]
+
+    @@index([gameId])
+}
+
+model TierItem {
+    id         Int          @id @default(autoincrement())
+    categoryId Int
+    category   TierCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    name       String
+    imageUrl   String
+    order      Int          @default(0)
+    entries    TierEntry[]
+
+    @@index([categoryId])
+}
+
+model TierMode {
+    id         Int          @id @default(autoincrement())
+    categoryId Int
+    category   TierCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    name       String
+    color      String
+    order      Int          @default(0)
+    tiers      TierTier[]
+    entries    TierEntry[]
+
+    @@index([categoryId])
+}
+
+model TierTier {
+    id      Int         @id @default(autoincrement())
+    modeId  Int
+    mode    TierMode    @relation(fields: [modeId], references: [id], onDelete: Cascade)
+    name    String
+    color   String
+    order   Int         @default(0)
+    entries TierEntry[]
+
+    @@index([modeId])
+}
+
+model TierEntry {
+    id     Int      @id @default(autoincrement())
+    modeId Int
+    mode   TierMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
+    tierId Int
+    tier   TierTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+    itemId Int
+    item   TierItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+    order  Int      @default(0)
+
+    @@index([modeId])
+    @@index([tierId])
+}
+
+model Board {
+    id      Int     @id @default(autoincrement())
+    gameId  Int
+    game    Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    name    String
+    rows    Int
+    cols    Int
+    order       Int     @default(0)
+    bgImage     String?
+    bgSize      String? @default("cover")
+    bgX         Float?  @default(0)
+    bgY         Float?  @default(0)
+    heightScale Float?  @default(1.0)
+    widthScale  Float?  @default(1.0)
+    bgPaddingX  Float?  @default(0)
+    bgPaddingY  Float?  @default(0)
+    gridOffsetX Float?  @default(0)
+    gridOffsetY Float?  @default(0)
+
+    @@index([gameId])
+}
+
+model UnitCategory {
+    id     Int    @id @default(autoincrement())
+    name   String
+    order  Int    @default(0)
+    gameId Int
+    game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    units  Unit[]
+
+    @@index([gameId])
+}
+
+model Unit {
+    id         Int          @id @default(autoincrement())
+    name       String
+    imageUrl   String
+    categoryId Int
+    category   UnitCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    gameId     Int
+    game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+    @@index([gameId])
+    @@index([categoryId])
 }
 
 model GameImage {

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Board" ADD COLUMN "gridOffsetX" INTEGER DEFAULT 0;
+ALTER TABLE "Board" ADD COLUMN "gridOffsetY" INTEGER DEFAULT 0;

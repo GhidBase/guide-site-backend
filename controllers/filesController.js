@@ -28,6 +28,44 @@ async function createBucket(req, res) {
 
 async function uploadFile(req, res) {
     console.log("Upload file request received");
+
+    // Pool image reference — no actual upload, just link the URL to the block
+    if (req.body?.imageUrl) {
+        const url = req.body.imageUrl;
+        const filename = url.split("/").pop();
+        const blockId = +req.params.blockId;
+
+        if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+            const newFile = await db.createFile({
+                title: filename,
+                filename,
+                url,
+                blockId,
+                status: "ACTIVE",
+            });
+            return res.json(newFile);
+        } else {
+            const newFile = await db.createFile({
+                title: filename,
+                filename,
+                url,
+                blockId: null,
+                status: "PENDING_UPLOAD",
+            });
+            await pendingDb.createPendingBlock({
+                blockId,
+                userId: req.user.id,
+                operation: "ADD_FILE",
+                content: { title: filename, url, filename, fileId: newFile.id },
+                type: "file-upload-request",
+            });
+            return res.status(202).json({
+                message: "File uploaded, pending review.",
+                file: newFile,
+            });
+        }
+    }
+
     const file = req.files[0];
     const title = file.originalname;
     const url = file.location;

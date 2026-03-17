@@ -55,7 +55,7 @@ async function deletePageById(id, gameId) {
     });
 }
 
-async function updatePage({ id, title, slug, gameId, sort, description } = {}) {
+async function updatePage({ id, title, slug, gameId, sort, description, sectionId } = {}) {
     return await prisma.page.update({
         where: {
             id,
@@ -66,6 +66,7 @@ async function updatePage({ id, title, slug, gameId, sort, description } = {}) {
             slug,
             sort,
             description,
+            ...(sectionId !== undefined && { sectionId }),
         },
     });
 }

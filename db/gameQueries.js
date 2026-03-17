@@ -26,7 +26,7 @@ async function createGame(title) {
     });
 }
 
-async function updateGame({ title, id, slug, navbar, discordUrl }) {
+async function updateGame({ title, id, slug, navbar, discordUrl, showSupportButton }) {
     return await prisma.game.update({
         where: {
             id,
@@ -36,6 +36,7 @@ async function updateGame({ title, id, slug, navbar, discordUrl }) {
             slug,
             navbar,
             discordUrl,
+            ...(showSupportButton !== undefined && { showSupportButton }),
         },
     });
 }
