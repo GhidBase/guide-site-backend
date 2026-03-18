@@ -28,6 +28,48 @@ function formatComment(comment, currentUserId) {
     };
 }
 
+async function getAllCommentsForGame(gameId, currentUserId) {
+    const comments = await prisma.comment.findMany({
+        where: {
+            parentId: null,
+            page: { gameId },
+        },
+        orderBy: { createdAt: "desc" },
+        include: {
+            page: { select: { title: true, slug: true } },
+            upvotes: { select: { userId: true } },
+            replies: {
+                orderBy: { createdAt: "asc" },
+                include: {
+                    page: { select: { title: true, slug: true } },
+                    upvotes: { select: { userId: true } },
+                },
+            },
+        },
+    });
+
+    return comments.map((c) => {
+        const { page, upvotes, replies, ...rest } = c;
+        return {
+            ...rest,
+            pageTitle: page.title,
+            pageSlug: page.slug,
+            upvoteCount: upvotes.length,
+            hasUpvoted: currentUserId ? upvotes.some((u) => u.userId === currentUserId) : false,
+            replies: replies.map((r) => {
+                const { page: rPage, upvotes: rUpvotes, ...rRest } = r;
+                return {
+                    ...rRest,
+                    pageTitle: rPage.title,
+                    pageSlug: rPage.slug,
+                    upvoteCount: rUpvotes.length,
+                    hasUpvoted: currentUserId ? rUpvotes.some((u) => u.userId === currentUserId) : false,
+                };
+            }),
+        };
+    });
+}
+
 async function getCommentsForPage(pageId, currentUserId) {
     const comments = await prisma.comment.findMany({
         where: { pageId, parentId: null },
@@ -111,6 +153,7 @@ async function toggleUpvote(commentId, userId) {
 
 export default {
     resolvePageId,
+    getAllCommentsForGame,
     getCommentsForPage,
     createComment,
     createReply,
