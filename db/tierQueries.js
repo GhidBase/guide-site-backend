@@ -17,12 +17,13 @@ async function getTierCategoryFull(id) {
             modes: {
                 orderBy: { order: "asc" },
                 include: {
+                    sections: { orderBy: { order: "asc" } },
                     tiers: {
                         orderBy: { order: "asc" },
                         include: {
                             entries: {
                                 orderBy: { order: "asc" },
-                                select: { id: true, itemId: true, order: true },
+                                select: { id: true, itemId: true, sectionId: true, order: true },
                             },
                         },
                     },
@@ -91,9 +92,19 @@ async function countTierEntriesInTier(tierId) {
     return await prisma.tierEntry.count({ where: { tierId } });
 }
 
-async function createTierEntry({ modeId, tierId, itemId }) {
+async function createTierEntry({ modeId, tierId, itemId, sectionId }) {
     const order = await countTierEntriesInTier(tierId);
-    return await prisma.tierEntry.create({ data: { modeId, tierId, itemId, order } });
+    return await prisma.tierEntry.create({ data: { modeId, tierId, itemId, order, sectionId: sectionId ?? null } });
+}
+
+// ── Sections ──────────────────────────────────────────────────────────────────
+
+async function createTierSection({ modeId, name, order }) {
+    return await prisma.tierSection.create({ data: { modeId, name, order } });
+}
+
+async function deleteTierSection(id) {
+    return await prisma.tierSection.delete({ where: { id } });
 }
 
 async function deleteTierEntry(id) {
@@ -115,4 +126,6 @@ export default {
     deleteTierTier,
     createTierEntry,
     deleteTierEntry,
+    createTierSection,
+    deleteTierSection,
 };
