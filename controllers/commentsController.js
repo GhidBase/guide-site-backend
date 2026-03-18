@@ -1,5 +1,11 @@
 import db from "../db/commentQueries.js";
 
+async function getAllCommentsForGame(req, res) {
+    const gameId = +req.params.gameId;
+    const comments = await db.getAllCommentsForGame(gameId, req.user.id);
+    res.json(comments);
+}
+
 async function getComments(req, res) {
     const pageIdParam = req.params.pageId;
     const pageId = await db.resolvePageId(pageIdParam);
@@ -100,6 +106,7 @@ async function upvoteComment(req, res) {
 }
 
 export default {
+    getAllCommentsForGame,
     getComments,
     postComment,
     postReply,
