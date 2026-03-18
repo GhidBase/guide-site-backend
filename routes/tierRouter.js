@@ -14,6 +14,8 @@ import {
     deleteTierTier,
     createTierEntry,
     deleteTierEntry,
+    createTierSection,
+    deleteTierSection,
 } from "../controllers/tierController.js";
 
 const router = Router({ mergeParams: true });
@@ -36,6 +38,10 @@ router.delete("/tier-categories/:categoryId/modes/:modeId", requireAdmin, delete
 router.post("/tier-categories/:categoryId/modes/:modeId/tiers", requireAdmin, createTierTier);
 router.put("/tier-categories/:categoryId/modes/:modeId/tiers/:tierId", requireAdmin, updateTierTier);
 router.delete("/tier-categories/:categoryId/modes/:modeId/tiers/:tierId", requireAdmin, deleteTierTier);
+
+// Sections
+router.post("/tier-categories/:categoryId/modes/:modeId/sections", requireAdmin, createTierSection);
+router.delete("/tier-categories/:categoryId/modes/:modeId/sections/:sectionId", requireAdmin, deleteTierSection);
 
 // Entries
 router.post("/tier-categories/:categoryId/modes/:modeId/entries", requireAdmin, createTierEntry);

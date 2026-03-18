@@ -195,16 +195,27 @@ model TierItem {
 }
 
 model TierMode {
-    id         Int          @id @default(autoincrement())
+    id         Int           @id @default(autoincrement())
     categoryId Int
-    category   TierCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    category   TierCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
     name       String
     color      String
-    order      Int          @default(0)
+    order      Int           @default(0)
     tiers      TierTier[]
     entries    TierEntry[]
+    sections   TierSection[]
 
     @@index([categoryId])
+}
+
+model TierSection {
+    id      Int      @id @default(autoincrement())
+    modeId  Int
+    mode    TierMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
+    name    String
+    order   Int      @default(0)
+
+    @@index([modeId])
 }
 
 model TierTier {
@@ -220,14 +231,15 @@ model TierTier {
 }
 
 model TierEntry {
-    id     Int      @id @default(autoincrement())
-    modeId Int
-    mode   TierMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
-    tierId Int
-    tier   TierTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
-    itemId Int
-    item   TierItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-    order  Int      @default(0)
+    id        Int      @id @default(autoincrement())
+    modeId    Int
+    mode      TierMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
+    tierId    Int
+    tier      TierTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+    itemId    Int
+    item      TierItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+    sectionId Int?
+    order     Int      @default(0)
 
     @@index([modeId])
     @@index([tierId])
