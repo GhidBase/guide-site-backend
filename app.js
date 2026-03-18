@@ -66,11 +66,11 @@ app.use(express.json());
 // "extended: true" allows nested objects in the data
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/", commentsRouter);
 app.use("/games", gamesRouter);
 app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
 app.use("/reviews", reviewRouter);
-app.use("/", commentsRouter);
 app.use("/", indexRouter);
 app.use("/", authRoutes);
 
