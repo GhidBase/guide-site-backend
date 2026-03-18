@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { requireAuth } from "../config/auth.js";
+import { requireAuth, requireAdmin } from "../config/auth.js";
 import commentsController from "../controllers/commentsController.js";
 
 const router = Router({ mergeParams: true });
 
+router.get("/games/:gameId/comments/all", requireAdmin, commentsController.getAllCommentsForGame);
 router.get("/pages/:pageId/comments", commentsController.getComments);
 router.post("/pages/:pageId/comments", requireAuth, commentsController.postComment);
 router.post("/comments/:commentId/replies", requireAuth, commentsController.postReply);
