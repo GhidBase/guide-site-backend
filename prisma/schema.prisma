@@ -82,6 +82,7 @@ model Game {
     navbar        Json?
     theme         Json?
     discordUrl    String?
+    isActive      Boolean        @default(true)
     contributions       Contribution[]
     images              GameImage[]
     unitCategories      UnitCategory[]
