@@ -18,6 +18,7 @@ import indexRouter from "./routes/indexRouter.js";
 import reviewRouter from "./routes/reviewRouter.js";
 import authRoutes from "./routes/authRoutes.js";
 import commentsRouter from "./routes/commentsRouter.js";
+import standalonePagesRouter from "./routes/standalonePagesRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -67,6 +68,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/", commentsRouter);
+app.use("/pages", standalonePagesRouter);
 app.use("/games", gamesRouter);
 app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
