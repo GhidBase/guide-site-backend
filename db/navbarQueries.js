@@ -32,6 +32,7 @@ async function getAllSections() {
 }
 
 async function getSectionsByGameId(gameId) {
+    if (gameId === null) return [];
     const sections = await prisma.section.findMany({
         where: { gameId },
         include: { pages: true },

@@ -101,13 +101,15 @@ async function getPage(req, res) {
     console.log(req.params);
     const gameId = +req.params.gameId;
     const slug = req.params.slug;
-    console.log("gameId: " + gameId);
-
-    console.log("game: " + gameId + "\n");
-    let page, blocks;
     console.log("GameId: " + gameId);
     console.log("PageSlug: " + slug);
-    page = await db.getPageBySlugAndGameId({ gameId, slug });
+
+    let page, blocks;
+    if (isNaN(gameId)) {
+        page = await db.getPageBySlugWithNoGame({ slug });
+    } else {
+        page = await db.getPageBySlugAndGameId({ gameId, slug });
+    }
     if (page != null) {
         console.log("Page not null");
         console.log(page);

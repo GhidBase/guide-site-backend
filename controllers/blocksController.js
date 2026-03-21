@@ -5,7 +5,7 @@ import contributionDb from "../db/contributionQueries.js";
 
 async function getBlock(req, res) {
     const blockId = +req.params.blockId;
-    const gameId = +req.params.gameId;
+    const gameId = req.params.gameId != null ? +req.params.gameId : null;
 
     console.log("Block get request received " + blockId);
     const result = await db.getBlock({ id: blockId, gameId });
