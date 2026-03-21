@@ -86,4 +86,53 @@ async function updateBlock(req, res) {
     }
 }
 
-export default { deleteBlock, updateBlock, getBlock };
+async function getBlockStandalone(req, res) {
+    const blockId = +req.params.blockId;
+    const result = await db.getBlockById(blockId);
+    if (!result) return res.status(404).json({ error: "Block not found" });
+    res.send(result);
+}
+
+async function deleteBlockStandalone(req, res) {
+    const id = +req.params.blockId;
+    const exists = await db.getBlockById(id);
+    if (!exists) return res.status(404).json({ error: "Block not found" });
+
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        const result = await db.deleteBlockById(id);
+        res.status(200).json(result);
+    } else {
+        const existingPending = await pendingDb.findPendingBlockByBlockIdAndOperation(id, "DELETE");
+        if (existingPending) {
+            return res.status(409).json({ error: "A pending deletion request for this block already exists." });
+        }
+        await pendingDb.createPendingBlock({ blockId: id, userId: req.user.id, operation: "DELETE", type: "block-deletion-request" });
+        res.status(202).json({ message: "Block deletion requested, pending review." });
+    }
+}
+
+async function updateBlockStandalone(req, res) {
+    const id = +req.params.blockId;
+    const { content, content2, type } = req.body;
+
+    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+        const result = await db.updateBlockById({ id, content, content2 });
+        await pagesDb.addContributor({ pageId: result.pageId, userId: req.user.id });
+        res.status(200).json(result);
+    } else {
+        const existingPending = await pendingDb.findPendingBlockByBlockIdAndOperation(id, "UPDATE");
+        if (existingPending) {
+            return res.status(409).json({ error: "A pending update request for this block already exists." });
+        }
+        await pendingDb.createPendingBlock({
+            blockId: id,
+            userId: req.user.id,
+            operation: "UPDATE",
+            content: { content, content2 },
+            type: type || "block-update-request",
+        });
+        res.status(202).json({ message: "Block update requested, pending review." });
+    }
+}
+
+export default { deleteBlock, updateBlock, getBlock, getBlockStandalone, deleteBlockStandalone, updateBlockStandalone };
