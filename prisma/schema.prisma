@@ -149,8 +149,22 @@ model Page {
     contributors  User[]         @relation("PageContributors")
     contributions Contribution[]
     comments      Comment[]
+    images        PageImage[]
 
     @@unique([slug, gameId])
+}
+
+model PageImage {
+    id        Int      @id @default(autoincrement())
+    title     String
+    filename  String
+    url       String
+    category  String?
+    page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+    pageId    Int
+    createdAt DateTime @default(now())
+
+    @@index([pageId])
 }
 
 model Block {
