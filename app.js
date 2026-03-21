@@ -18,6 +18,8 @@ import indexRouter from "./routes/indexRouter.js";
 import reviewRouter from "./routes/reviewRouter.js";
 import authRoutes from "./routes/authRoutes.js";
 import commentsRouter from "./routes/commentsRouter.js";
+import pagesRouter from "./routes/pagesRouter.js";
+import blocksRouter from "./routes/blocksRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -68,6 +70,8 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/", commentsRouter);
 app.use("/games", gamesRouter);
+app.use("/pages", pagesRouter);
+app.use("/blocks", blocksRouter);
 app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
 app.use("/reviews", reviewRouter);

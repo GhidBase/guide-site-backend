@@ -1,8 +1,8 @@
 import indexController from "../controllers/indexController.js";
 import gameController from "../controllers/gameController.js";
+import pagesController from "../controllers/pagesController.js";
 
 import { Router } from "express";
-import pagesController from "../controllers/pagesController.js";
 const router = Router({ mergeParams: true });
 
 router.get("/leaderboard", gameController.getGlobalLeaderboard);

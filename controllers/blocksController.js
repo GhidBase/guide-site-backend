@@ -14,7 +14,7 @@ async function getBlock(req, res) {
 
 async function deleteBlock(req, res) {
     const id = +req.params.blockId;
-    const gameId = +req.params.gameId;
+    const gameId = req.params.gameId != null ? +req.params.gameId : null;
     const exists = await db.getBlock({ id, gameId });
     if (!exists) {
         return res.status(404).json({ error: "Block not found" });
@@ -50,7 +50,7 @@ async function deleteBlock(req, res) {
 
 async function updateBlock(req, res) {
     const id = +req.params.blockId;
-    const gameId = +req.params.gameId;
+    const gameId = req.params.gameId != null ? +req.params.gameId : null;
     console.log("Block update request received for Block ID: " + id);
     const { content, content2, type } = req.body;
 
@@ -58,11 +58,13 @@ async function updateBlock(req, res) {
         const result = await db.updateBlock({ id, content, content2, gameId });
         console.log(result);
         await pagesDb.addContributor({ pageId: result.pageId, userId: req.user.id });
-        await contributionDb.createContribution({
-            userId: req.user.id,
-            pageId: result.pageId,
-            gameId,
-        });
+        if (gameId) {
+            await contributionDb.createContribution({
+                userId: req.user.id,
+                pageId: result.pageId,
+                gameId,
+            });
+        }
         res.status(200).json(result);
     } else {
         const existingPending =
