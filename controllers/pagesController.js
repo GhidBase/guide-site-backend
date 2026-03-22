@@ -84,6 +84,7 @@ async function getNonGamePage(req, res) {
     let notFound = false;
     if (page == null) {
         notFound = true;
+        console.log(`[404] Non-game page not found — slug: "${slug}"`);
     }
     res.send({ page, blocks, notFound });
 }
