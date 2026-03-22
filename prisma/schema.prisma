@@ -140,6 +140,7 @@ model Page {
     slug        String?
     navbarTitle String?
     description String?
+    wide        Boolean  @default(false)
     blocks      Block[]
     game        Game?    @relation(fields: [gameId], references: [id])
     gameId      Int?
