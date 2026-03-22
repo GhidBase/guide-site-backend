@@ -7,9 +7,22 @@ async function getGameImages(gameId) {
     });
 }
 
+async function getGlobalImages() {
+    return await prisma.gameImage.findMany({
+        where: { gameId: null },
+        orderBy: { createdAt: "desc" },
+    });
+}
+
 async function createGameImage({ title, filename, url, gameId, category }) {
     return await prisma.gameImage.create({
         data: { title, filename, url, gameId, category },
+    });
+}
+
+async function createGlobalImage({ title, filename, url, category }) {
+    return await prisma.gameImage.create({
+        data: { title, filename, url, gameId: null, category },
     });
 }
 
@@ -21,4 +34,4 @@ async function deleteGameImage(id) {
     return await prisma.gameImage.delete({ where: { id } });
 }
 
-export default { getGameImages, createGameImage, getGameImage, deleteGameImage };
+export default { getGameImages, getGlobalImages, createGameImage, createGlobalImage, getGameImage, deleteGameImage };

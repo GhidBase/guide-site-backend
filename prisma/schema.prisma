@@ -298,8 +298,8 @@ model GameImage {
     filename  String
     url       String
     category  String?
-    game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    gameId    Int
+    game      Game?    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+    gameId    Int?
     createdAt DateTime @default(now())
 
     @@index([gameId])

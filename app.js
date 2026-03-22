@@ -20,6 +20,7 @@ import authRoutes from "./routes/authRoutes.js";
 import commentsRouter from "./routes/commentsRouter.js";
 import pagesRouter from "./routes/pagesRouter.js";
 import blocksRouter from "./routes/blocksRouter.js";
+import siteImagesRouter from "./routes/siteImagesRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -70,6 +71,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/", commentsRouter);
 app.use("/games", gamesRouter);
+app.use("/images", siteImagesRouter);
 app.use("/pages", pagesRouter);
 app.use("/blocks", blocksRouter);
 app.use("/sections", sectionsRouter);
