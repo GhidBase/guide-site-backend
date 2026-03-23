@@ -141,6 +141,7 @@ model Page {
     navbarTitle String?
     description String?
     wide        Boolean  @default(false)
+    views       Int      @default(0)
     blocks      Block[]
     game        Game?    @relation(fields: [gameId], references: [id])
     gameId      Int?

@@ -55,7 +55,7 @@ async function deletePageById(id, gameId) {
     });
 }
 
-async function updatePage({ id, title, slug, gameId, sort, description, sectionId, wide } = {}) {
+async function updatePage({ id, title, slug, gameId, sort, description, sectionId, wide, views } = {}) {
     return await prisma.page.update({
         where: {
             id,
@@ -68,6 +68,7 @@ async function updatePage({ id, title, slug, gameId, sort, description, sectionI
             description,
             ...(sectionId !== undefined && { sectionId }),
             ...(wide !== undefined && { wide }),
+            ...(views !== undefined && { views }),
         },
     });
 }
@@ -119,6 +120,13 @@ async function getPageBySlugAndGameId({ slug, gameId }) {
                 select: { id: true, username: true },
             },
         },
+    });
+}
+
+async function incrementPageViews(pageId) {
+    return await prisma.page.update({
+        where: { id: pageId },
+        data: { views: { increment: 1 } },
     });
 }
 
@@ -204,4 +212,5 @@ export default {
     getPagesWithoutGame,
     updatePageOrder,
     addContributor,
+    incrementPageViews,
 };

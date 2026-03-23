@@ -63,8 +63,9 @@ async function updatePage(req, res) {
     const sort = +req.body.sort;
     const sectionId = req.body.sectionId === null ? null : req.body.sectionId !== undefined ? +req.body.sectionId : undefined;
     const wide = req.body.wide !== undefined ? Boolean(req.body.wide) : undefined;
+    const views = req.body.views !== undefined ? +req.body.views : undefined;
     console.log(sort);
-    const result = await db.updatePage({ id, title, slug, gameId, sort, description, sectionId, wide });
+    const result = await db.updatePage({ id, title, slug, gameId, sort, description, sectionId, wide, views });
     console.log(result);
     res.send(result);
 }
@@ -183,6 +184,13 @@ async function offsetBlockOrderForPage(pageId, order) {
     return result;
 }
 
+async function incrementViews(req, res) {
+    const pageId = +req.params.pageId;
+    if (isNaN(pageId)) return res.status(400).end();
+    await db.incrementPageViews(pageId);
+    res.status(204).end();
+}
+
 export async function reorderPages(req, res) {
     try {
         const { sectionId, pageOrder } = req.body;
@@ -214,4 +222,5 @@ export default {
     updateBlocksForPage,
     getNonGamePage,
     getNonGamePages,
+    incrementViews,
 };

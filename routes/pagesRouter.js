@@ -11,6 +11,7 @@ router.post("/", requireAdmin, pagesController.postPage);
 router.get("/by-slug/:slug", pagesController.getPage);
 router.delete("/by-id/:pageId", requireAdmin, pagesController.deletePage);
 router.put("/by-id/:pageId", requireAdmin, pagesController.updatePage);
+router.post("/by-id/:pageId/view", pagesController.incrementViews);
 router.post(
     "/by-id/:pageId/blocks",
     requireAuth,
