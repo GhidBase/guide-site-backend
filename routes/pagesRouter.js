@@ -1,4 +1,4 @@
-import { requireAdmin, requireAuth } from "../config/auth.js";
+import { requireAdmin, requireAuth, requireEditor } from "../config/auth.js";
 import pagesController, { reorderPages } from "../controllers/pagesController.js";
 
 import { Router } from "express";
@@ -14,7 +14,7 @@ router.put("/by-id/:pageId", requireAdmin, pagesController.updatePage);
 router.post("/by-id/:pageId/view", pagesController.incrementViews);
 router.post("/by-id/:pageId/claim", requireAuth, pagesController.claimPage);
 router.delete("/by-id/:pageId/claim", requireAuth, pagesController.unclaimPage);
-router.get("/analytics", requireAdmin, pagesController.getAnalytics);
+router.get("/analytics", requireEditor, pagesController.getAnalytics);
 router.post(
     "/by-id/:pageId/blocks",
     requireAuth,
