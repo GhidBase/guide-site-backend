@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Page" ADD COLUMN "claimedById" INTEGER REFERENCES "User"(id) ON DELETE SET NULL;

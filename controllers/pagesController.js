@@ -191,6 +191,27 @@ async function incrementViews(req, res) {
     res.status(204).end();
 }
 
+async function claimPage(req, res) {
+    const pageId = +req.params.pageId;
+    const userId = req.user?.id;
+    if (isNaN(pageId) || !userId) return res.status(400).end();
+    await db.claimPage({ pageId, userId });
+    res.status(204).end();
+}
+
+async function unclaimPage(req, res) {
+    const pageId = +req.params.pageId;
+    if (isNaN(pageId)) return res.status(400).end();
+    await db.unclaimPage(pageId);
+    res.status(204).end();
+}
+
+async function getAnalytics(req, res) {
+    const gameId = req.params.gameId ? +req.params.gameId : null;
+    const data = await db.getAnalytics(gameId);
+    res.json(data);
+}
+
 export async function reorderPages(req, res) {
     try {
         const { sectionId, pageOrder } = req.body;
@@ -223,4 +244,7 @@ export default {
     getNonGamePage,
     getNonGamePages,
     incrementViews,
+    claimPage,
+    unclaimPage,
+    getAnalytics,
 };

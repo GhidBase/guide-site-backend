@@ -30,6 +30,7 @@ model User {
     pendingBlocks     PendingBlock[]
     reviewedBlocks    PendingBlock[] @relation("ReviewedBlocks")
     contributedPages  Page[]         @relation("PageContributors")
+    claimedPages      Page[]         @relation("PageClaimed")
     contributions     Contribution[]
     comments          Comment[]
     commentUpvotes    CommentUpvote[]
@@ -149,6 +150,8 @@ model Page {
     sectionId   Int?
     sort          Int?
     contributors  User[]         @relation("PageContributors")
+    claimedBy     User?          @relation("PageClaimed", fields: [claimedById], references: [id], onDelete: SetNull)
+    claimedById   Int?
     contributions Contribution[]
     comments      Comment[]
 

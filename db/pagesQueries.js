@@ -2,8 +2,9 @@ import { prisma } from "../lib/prisma.js";
 
 async function getPages(gameId) {
     return await prisma.page.findMany({
-        where: {
-            gameId,
+        where: { gameId },
+        include: {
+            claimedBy: { select: { id: true, username: true } },
         },
     });
 }
@@ -116,11 +117,51 @@ async function getPageBySlugAndGameId({ slug, gameId }) {
             },
         },
         include: {
-            contributors: {
-                select: { id: true, username: true },
-            },
+            contributors: { select: { id: true, username: true } },
+            claimedBy: { select: { id: true, username: true } },
         },
     });
+}
+
+async function claimPage({ pageId, userId }) {
+    return await prisma.page.update({
+        where: { id: pageId },
+        data: { claimedById: userId },
+    });
+}
+
+async function unclaimPage(pageId) {
+    return await prisma.page.update({
+        where: { id: pageId },
+        data: { claimedById: null },
+    });
+}
+
+async function getAnalytics(gameId) {
+    const pages = await prisma.page.findMany({
+        where: gameId ? { gameId } : { gameId: null },
+        orderBy: { views: "desc" },
+        select: {
+            id: true,
+            title: true,
+            slug: true,
+            views: true,
+            claimedBy: { select: { id: true, username: true } },
+        },
+    });
+
+    const userViewMap = {};
+    for (const page of pages) {
+        if (page.claimedBy) {
+            const { id, username } = page.claimedBy;
+            if (!userViewMap[id]) userViewMap[id] = { id, username, views: 0, pageCount: 0 };
+            userViewMap[id].views += page.views;
+            userViewMap[id].pageCount += 1;
+        }
+    }
+    const users = Object.values(userViewMap).sort((a, b) => b.views - a.views);
+
+    return { pages, users };
 }
 
 async function incrementPageViews(pageId) {
@@ -213,4 +254,7 @@ export default {
     updatePageOrder,
     addContributor,
     incrementPageViews,
+    claimPage,
+    unclaimPage,
+    getAnalytics,
 };
