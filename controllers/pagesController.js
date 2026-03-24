@@ -64,8 +64,9 @@ async function updatePage(req, res) {
     const sectionId = req.body.sectionId === null ? null : req.body.sectionId !== undefined ? +req.body.sectionId : undefined;
     const wide = req.body.wide !== undefined ? Boolean(req.body.wide) : undefined;
     const views = req.body.views !== undefined ? +req.body.views : undefined;
+    const claimedById = req.body.claimedById === null ? null : req.body.claimedById !== undefined ? +req.body.claimedById : undefined;
     console.log(sort);
-    const result = await db.updatePage({ id, title, slug, gameId, sort, description, sectionId, wide, views });
+    const result = await db.updatePage({ id, title, slug, gameId, sort, description, sectionId, wide, views, claimedById });
     console.log(result);
     res.send(result);
 }
