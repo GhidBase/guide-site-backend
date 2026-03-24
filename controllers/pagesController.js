@@ -209,14 +209,16 @@ async function unclaimPage(req, res) {
 async function getAnalytics(req, res) {
     const gameId = req.params.gameId ? +req.params.gameId : null;
     const since = req.query.since ?? null;
-const data = await db.getAnalytics(gameId, since);
+    const until = req.query.until ?? null;
+    const data = await db.getAnalytics(gameId, since, until);
     res.json(data);
 }
 
 async function getViewLeaderboard(req, res) {
     const gameId = req.params.gameId ? +req.params.gameId : null;
     const since = req.query.since ?? null;
-    const data = await db.getViewLeaderboard(gameId, since);
+    const until = req.query.until ?? null;
+    const data = await db.getViewLeaderboard(gameId, since, until);
     res.json(data);
 }
 

@@ -123,60 +123,40 @@ async function getPageBySlugAndGameId({ slug, gameId }) {
     });
 }
 
-async function getViewLeaderboard(gameId, since) {
+async function getViewLeaderboard(gameId, since, until) {
     // All-time: use the denormalized views counter on Page (includes pre-PageView history)
     if (!since) {
-        if (gameId) {
-            return await prisma.$queryRaw`
-                SELECT u.id, u.username, SUM(p.views)::int AS views
-                FROM "Page" p
-                JOIN "User" u ON u.id = p."claimedById"
-                WHERE p."claimedById" IS NOT NULL
-                  AND p."gameId" = ${gameId}
-                GROUP BY u.id, u.username
-                ORDER BY views DESC
-                LIMIT 20
-            `;
-        } else {
-            return await prisma.$queryRaw`
-                SELECT u.id, u.username, SUM(p.views)::int AS views
-                FROM "Page" p
-                JOIN "User" u ON u.id = p."claimedById"
-                WHERE p."claimedById" IS NOT NULL
-                GROUP BY u.id, u.username
-                ORDER BY views DESC
-                LIMIT 20
-            `;
-        }
+        const gameFilter = gameId ? Prisma.sql`AND p."gameId" = ${gameId}` : Prisma.empty;
+        return await prisma.$queryRaw`
+            SELECT u.id, u.username, SUM(p.views)::int AS views
+            FROM "Page" p
+            JOIN "User" u ON u.id = p."claimedById"
+            WHERE p."claimedById" IS NOT NULL
+            ${gameFilter}
+            GROUP BY u.id, u.username
+            ORDER BY views DESC
+            LIMIT 20
+        `;
     }
 
     // Time-filtered: use PageView records
     const sinceDate = new Date(since);
-    if (gameId) {
-        return await prisma.$queryRaw`
-            SELECT u.id, u.username, COUNT(pv.id)::int AS views
-            FROM "PageView" pv
-            JOIN "User" u ON u.id = pv."claimedById"
-            JOIN "Page" p ON p.id = pv."pageId"
-            WHERE pv."claimedById" IS NOT NULL
-              AND p."gameId" = ${gameId}
-              AND pv."createdAt" >= ${sinceDate}
-            GROUP BY u.id, u.username
-            ORDER BY views DESC
-            LIMIT 20
-        `;
-    } else {
-        return await prisma.$queryRaw`
-            SELECT u.id, u.username, COUNT(pv.id)::int AS views
-            FROM "PageView" pv
-            JOIN "User" u ON u.id = pv."claimedById"
-            WHERE pv."claimedById" IS NOT NULL
-              AND pv."createdAt" >= ${sinceDate}
-            GROUP BY u.id, u.username
-            ORDER BY views DESC
-            LIMIT 20
-        `;
-    }
+    const untilClause = until ? Prisma.sql`AND pv."createdAt" < ${new Date(until)}` : Prisma.empty;
+    const gameFilter  = gameId ? Prisma.sql`AND p."gameId" = ${gameId}` : Prisma.empty;
+
+    return await prisma.$queryRaw`
+        SELECT u.id, u.username, COUNT(pv.id)::int AS views
+        FROM "PageView" pv
+        JOIN "User" u ON u.id = pv."claimedById"
+        JOIN "Page" p ON p.id = pv."pageId"
+        WHERE pv."claimedById" IS NOT NULL
+          AND pv."createdAt" >= ${sinceDate}
+          ${untilClause}
+          ${gameFilter}
+        GROUP BY u.id, u.username
+        ORDER BY views DESC
+        LIMIT 20
+    `;
 }
 
 async function claimPage({ pageId, userId }) {
@@ -193,8 +173,8 @@ async function unclaimPage(pageId) {
     });
 }
 
-async function getAnalytics(gameId, since) {
-if (!since) {
+async function getAnalytics(gameId, since, until) {
+    if (!since) {
         // All-time: use denormalized counter
         const pages = await prisma.page.findMany({
             where: gameId ? { gameId } : { gameId: null },
@@ -223,29 +203,22 @@ if (!since) {
 
     // Time-filtered: count PageView records
     const sinceDate = new Date(since);
-    const rows = gameId
-        ? await prisma.$queryRaw`
-            SELECT p.id, p.title, p.slug, p."claimedById",
-                   u.username AS "claimedUsername",
-                   COUNT(pv.id)::int AS views
-            FROM "Page" p
-            LEFT JOIN "PageView" pv ON pv."pageId" = p.id AND pv."createdAt" >= ${sinceDate}
-            LEFT JOIN "User" u ON u.id = p."claimedById"
-            WHERE p."gameId" = ${gameId}
-            GROUP BY p.id, p.title, p.slug, p."claimedById", u.username
-            ORDER BY views DESC
-          `
-        : await prisma.$queryRaw`
-            SELECT p.id, p.title, p.slug, p."claimedById",
-                   u.username AS "claimedUsername",
-                   COUNT(pv.id)::int AS views
-            FROM "Page" p
-            LEFT JOIN "PageView" pv ON pv."pageId" = p.id AND pv."createdAt" >= ${sinceDate}
-            LEFT JOIN "User" u ON u.id = p."claimedById"
-            WHERE p."gameId" IS NULL
-            GROUP BY p.id, p.title, p.slug, p."claimedById", u.username
-            ORDER BY views DESC
-          `;
+    const untilClause = until ? Prisma.sql`AND pv."createdAt" < ${new Date(until)}` : Prisma.empty;
+    const gameFilter  = gameId
+        ? Prisma.sql`WHERE p."gameId" = ${gameId}`
+        : Prisma.sql`WHERE p."gameId" IS NULL`;
+
+    const rows = await prisma.$queryRaw`
+        SELECT p.id, p.title, p.slug, p."claimedById",
+               u.username AS "claimedUsername",
+               COUNT(pv.id)::int AS views
+        FROM "Page" p
+        LEFT JOIN "PageView" pv ON pv."pageId" = p.id AND pv."createdAt" >= ${sinceDate} ${untilClause}
+        LEFT JOIN "User" u ON u.id = p."claimedById"
+        ${gameFilter}
+        GROUP BY p.id, p.title, p.slug, p."claimedById", u.username
+        ORDER BY views DESC
+    `;
 
     const pages = rows.map((r) => ({
         id: r.id,
