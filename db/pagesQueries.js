@@ -194,8 +194,7 @@ async function unclaimPage(pageId) {
 }
 
 async function getAnalytics(gameId, since) {
-    console.log("[getAnalytics query] gameId:", gameId, "since:", since, "!since:", !since);
-    if (!since) {
+if (!since) {
         // All-time: use denormalized counter
         const pages = await prisma.page.findMany({
             where: gameId ? { gameId } : { gameId: null },

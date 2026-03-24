@@ -209,8 +209,7 @@ async function unclaimPage(req, res) {
 async function getAnalytics(req, res) {
     const gameId = req.params.gameId ? +req.params.gameId : null;
     const since = req.query.since ?? null;
-    console.log("[getAnalytics] gameId:", gameId, "since:", since, "query:", req.query);
-    const data = await db.getAnalytics(gameId, since);
+const data = await db.getAnalytics(gameId, since);
     res.json(data);
 }
 
