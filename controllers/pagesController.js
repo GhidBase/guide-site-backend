@@ -212,6 +212,13 @@ async function getAnalytics(req, res) {
     res.json(data);
 }
 
+async function getViewLeaderboard(req, res) {
+    const gameId = req.params.gameId ? +req.params.gameId : null;
+    const since = req.query.since ?? null;
+    const data = await db.getViewLeaderboard(gameId, since);
+    res.json(data);
+}
+
 export async function reorderPages(req, res) {
     try {
         const { sectionId, pageOrder } = req.body;
@@ -247,4 +254,5 @@ export default {
     claimPage,
     unclaimPage,
     getAnalytics,
+    getViewLeaderboard,
 };

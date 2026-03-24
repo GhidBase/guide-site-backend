@@ -15,6 +15,7 @@ router.post("/by-id/:pageId/view", pagesController.incrementViews);
 router.post("/by-id/:pageId/claim", requireAuth, pagesController.claimPage);
 router.delete("/by-id/:pageId/claim", requireAuth, pagesController.unclaimPage);
 router.get("/analytics", requireEditor, pagesController.getAnalytics);
+router.get("/view-leaderboard", pagesController.getViewLeaderboard);
 router.post(
     "/by-id/:pageId/blocks",
     requireAuth,

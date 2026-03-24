@@ -31,6 +31,7 @@ model User {
     reviewedBlocks    PendingBlock[] @relation("ReviewedBlocks")
     contributedPages  Page[]         @relation("PageContributors")
     claimedPages      Page[]         @relation("PageClaimed")
+    pageViewsClaimed  PageView[]     @relation("PageViewClaimed")
     contributions     Contribution[]
     comments          Comment[]
     commentUpvotes    CommentUpvote[]
@@ -154,8 +155,22 @@ model Page {
     claimedById   Int?
     contributions Contribution[]
     comments      Comment[]
+    pageViews     PageView[]
 
     @@unique([slug, gameId])
+}
+
+model PageView {
+    id          Int      @id @default(autoincrement())
+    page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+    pageId      Int
+    claimedBy   User?    @relation("PageViewClaimed", fields: [claimedById], references: [id], onDelete: SetNull)
+    claimedById Int?
+    createdAt   DateTime @default(now())
+
+    @@index([pageId])
+    @@index([claimedById])
+    @@index([createdAt])
 }
 
 model Block {

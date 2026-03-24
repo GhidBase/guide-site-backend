@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma.js";
+import { prisma, Prisma } from "../lib/prisma.js";
 
 async function getPages(gameId) {
     return await prisma.page.findMany({
@@ -123,6 +123,62 @@ async function getPageBySlugAndGameId({ slug, gameId }) {
     });
 }
 
+async function getViewLeaderboard(gameId, since) {
+    // All-time: use the denormalized views counter on Page (includes pre-PageView history)
+    if (!since) {
+        if (gameId) {
+            return await prisma.$queryRaw`
+                SELECT u.id, u.username, SUM(p.views)::int AS views
+                FROM "Page" p
+                JOIN "User" u ON u.id = p."claimedById"
+                WHERE p."claimedById" IS NOT NULL
+                  AND p."gameId" = ${gameId}
+                GROUP BY u.id, u.username
+                ORDER BY views DESC
+                LIMIT 20
+            `;
+        } else {
+            return await prisma.$queryRaw`
+                SELECT u.id, u.username, SUM(p.views)::int AS views
+                FROM "Page" p
+                JOIN "User" u ON u.id = p."claimedById"
+                WHERE p."claimedById" IS NOT NULL
+                GROUP BY u.id, u.username
+                ORDER BY views DESC
+                LIMIT 20
+            `;
+        }
+    }
+
+    // Time-filtered: use PageView records
+    const sinceDate = new Date(since);
+    if (gameId) {
+        return await prisma.$queryRaw`
+            SELECT u.id, u.username, COUNT(pv.id)::int AS views
+            FROM "PageView" pv
+            JOIN "User" u ON u.id = pv."claimedById"
+            JOIN "Page" p ON p.id = pv."pageId"
+            WHERE pv."claimedById" IS NOT NULL
+              AND p."gameId" = ${gameId}
+              AND pv."createdAt" >= ${sinceDate}
+            GROUP BY u.id, u.username
+            ORDER BY views DESC
+            LIMIT 20
+        `;
+    } else {
+        return await prisma.$queryRaw`
+            SELECT u.id, u.username, COUNT(pv.id)::int AS views
+            FROM "PageView" pv
+            JOIN "User" u ON u.id = pv."claimedById"
+            WHERE pv."claimedById" IS NOT NULL
+              AND pv."createdAt" >= ${sinceDate}
+            GROUP BY u.id, u.username
+            ORDER BY views DESC
+            LIMIT 20
+        `;
+    }
+}
+
 async function claimPage({ pageId, userId }) {
     return await prisma.page.update({
         where: { id: pageId },
@@ -165,10 +221,22 @@ async function getAnalytics(gameId) {
 }
 
 async function incrementPageViews(pageId) {
-    return await prisma.page.update({
+    const page = await prisma.page.findUnique({
         where: { id: pageId },
-        data: { views: { increment: 1 } },
+        select: { claimedById: true },
     });
+    await prisma.$transaction([
+        prisma.page.update({
+            where: { id: pageId },
+            data: { views: { increment: 1 } },
+        }),
+        prisma.pageView.create({
+            data: {
+                pageId,
+                claimedById: page?.claimedById ?? null,
+            },
+        }),
+    ]);
 }
 
 async function addContributor({ pageId, userId }) {
@@ -254,6 +322,7 @@ export default {
     updatePageOrder,
     addContributor,
     incrementPageViews,
+    getViewLeaderboard,
     claimPage,
     unclaimPage,
     getAnalytics,
