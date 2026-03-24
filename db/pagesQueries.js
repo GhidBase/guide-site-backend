@@ -193,18 +193,68 @@ async function unclaimPage(pageId) {
     });
 }
 
-async function getAnalytics(gameId) {
-    const pages = await prisma.page.findMany({
-        where: gameId ? { gameId } : { gameId: null },
-        orderBy: { views: "desc" },
-        select: {
-            id: true,
-            title: true,
-            slug: true,
-            views: true,
-            claimedBy: { select: { id: true, username: true } },
-        },
-    });
+async function getAnalytics(gameId, since) {
+    console.log("[getAnalytics query] gameId:", gameId, "since:", since, "!since:", !since);
+    if (!since) {
+        // All-time: use denormalized counter
+        const pages = await prisma.page.findMany({
+            where: gameId ? { gameId } : { gameId: null },
+            orderBy: { views: "desc" },
+            select: {
+                id: true,
+                title: true,
+                slug: true,
+                views: true,
+                claimedBy: { select: { id: true, username: true } },
+            },
+        });
+
+        const userViewMap = {};
+        for (const page of pages) {
+            if (page.claimedBy) {
+                const { id, username } = page.claimedBy;
+                if (!userViewMap[id]) userViewMap[id] = { id, username, views: 0, pageCount: 0 };
+                userViewMap[id].views += page.views;
+                userViewMap[id].pageCount += 1;
+            }
+        }
+        const users = Object.values(userViewMap).sort((a, b) => b.views - a.views);
+        return { pages, users };
+    }
+
+    // Time-filtered: count PageView records
+    const sinceDate = new Date(since);
+    const rows = gameId
+        ? await prisma.$queryRaw`
+            SELECT p.id, p.title, p.slug, p."claimedById",
+                   u.username AS "claimedUsername",
+                   COUNT(pv.id)::int AS views
+            FROM "Page" p
+            LEFT JOIN "PageView" pv ON pv."pageId" = p.id AND pv."createdAt" >= ${sinceDate}
+            LEFT JOIN "User" u ON u.id = p."claimedById"
+            WHERE p."gameId" = ${gameId}
+            GROUP BY p.id, p.title, p.slug, p."claimedById", u.username
+            ORDER BY views DESC
+          `
+        : await prisma.$queryRaw`
+            SELECT p.id, p.title, p.slug, p."claimedById",
+                   u.username AS "claimedUsername",
+                   COUNT(pv.id)::int AS views
+            FROM "Page" p
+            LEFT JOIN "PageView" pv ON pv."pageId" = p.id AND pv."createdAt" >= ${sinceDate}
+            LEFT JOIN "User" u ON u.id = p."claimedById"
+            WHERE p."gameId" IS NULL
+            GROUP BY p.id, p.title, p.slug, p."claimedById", u.username
+            ORDER BY views DESC
+          `;
+
+    const pages = rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        slug: r.slug,
+        views: r.views,
+        claimedBy: r.claimedById ? { id: r.claimedById, username: r.claimedUsername } : null,
+    }));
 
     const userViewMap = {};
     for (const page of pages) {
@@ -216,7 +266,6 @@ async function getAnalytics(gameId) {
         }
     }
     const users = Object.values(userViewMap).sort((a, b) => b.views - a.views);
-
     return { pages, users };
 }
 
