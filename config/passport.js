@@ -1,6 +1,8 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import db from "../db/authQueries.js";
+import userDb from "../db/userQueries.js";
 import bcrypt from "bcryptjs";
 
 // This strategy only runs if both username and password are
@@ -30,6 +32,40 @@ passport.use(
             return done(err);
         }
     }),
+);
+
+passport.use(
+    new GoogleStrategy(
+        {
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: process.env.GOOGLE_CALLBACK_URL,
+        },
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+                const googleId = profile.id;
+                const email = profile.emails?.[0]?.value;
+                const avatarUrl = profile.photos?.[0]?.value;
+
+                let user = await userDb.findByGoogleId(googleId);
+                if (user) return done(null, user);
+
+                if (email) {
+                    user = await userDb.findByEmail(email);
+                    if (user) {
+                        user = await userDb.linkGoogleId(user.id, googleId, avatarUrl);
+                        return done(null, user);
+                    }
+                }
+
+                const username = email ? email.split("@")[0] : `user_${googleId.slice(0, 8)}`;
+                user = await userDb.createGoogleUser({ googleId, email, username, avatarUrl });
+                return done(null, user);
+            } catch (err) {
+                return done(err);
+            }
+        },
+    ),
 );
 
 passport.serializeUser((user, done) => {
