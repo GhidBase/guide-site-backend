@@ -21,6 +21,7 @@ import commentsRouter from "./routes/commentsRouter.js";
 import pagesRouter from "./routes/pagesRouter.js";
 import blocksRouter from "./routes/blocksRouter.js";
 import siteImagesRouter from "./routes/siteImagesRouter.js";
+import idleRouter from "./routes/idleRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -77,6 +78,7 @@ app.use("/blocks", blocksRouter);
 app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
 app.use("/reviews", reviewRouter);
+app.use("/idle", idleRouter);
 app.use("/", indexRouter);
 app.use("/", authRoutes);
 

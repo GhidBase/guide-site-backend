@@ -1,381 +1,470 @@
 generator client {
-    provider = "prisma-client-js"
-    output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-    provider = "postgresql"
+  provider = "postgresql"
 }
 
 model Session {
-    id        String   @id
-    sid       String   @unique
-    data      String
-    expiresAt DateTime
-}
-
-enum Role {
-    ADMIN
-    EDITOR
-    USER
+  id        String   @id
+  sid       String   @unique
+  data      String
+  expiresAt DateTime
 }
 
 model User {
-    id                Int            @id @default(autoincrement())
-    email             String?        @unique
-    name              String?
-    username          String         @unique
-    password          String
-    role              Role           @default(USER)
-    pendingBlocks     PendingBlock[]
-    reviewedBlocks    PendingBlock[] @relation("ReviewedBlocks")
-    contributedPages  Page[]         @relation("PageContributors")
-    claimedPages      Page[]         @relation("PageClaimed")
-    pageViewsClaimed  PageView[]     @relation("PageViewClaimed")
-    contributions     Contribution[]
-    comments          Comment[]
-    commentUpvotes    CommentUpvote[]
-}
-
-enum ReviewStatus {
-    PENDING
-    ACCEPTED
-    REFUSED
-}
-
-enum PendingOperationType {
-    CREATE
-    UPDATE
-    DELETE
-    ADD_FILE
-    DELETE_FILE
+  id               Int             @id @default(autoincrement())
+  email            String?         @unique
+  name             String?
+  username         String          @unique
+  password         String
+  role             Role            @default(USER)
+  comments         Comment[]
+  commentUpvotes   CommentUpvote[]
+  contributions    Contribution[]
+  claimedPages     Page[]          @relation("PageClaimed")
+  pageViewsClaimed PageView[]      @relation("PageViewClaimed")
+  reviewedBlocks   PendingBlock[]  @relation("ReviewedBlocks")
+  pendingBlocks    PendingBlock[]
+  contributedPages Page[]          @relation("PageContributors")
+  idleCharacter    IdleCharacter?
 }
 
 model PendingBlock {
-    id            Int                  @id @default(autoincrement())
-    block         Block?               @relation(fields: [blockId], references: [id], onDelete: Cascade)
-    blockId       Int?
-    content       Json?
-    type          String?
-    user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId        Int
-    status        ReviewStatus         @default(PENDING)
-    createdAt     DateTime             @default(now())
-    updatedAt     DateTime             @updatedAt
-    reviewerId    Int?
-    reviewer      User?                @relation("ReviewedBlocks", fields: [reviewerId], references: [id], onDelete: SetNull)
-    reviewedAt    DateTime?
-    reviewMessage String?
-    operation     PendingOperationType @default(UPDATE)
+  id            Int                  @id @default(autoincrement())
+  blockId       Int?
+  content       Json?
+  type          String?
+  userId        Int
+  status        ReviewStatus         @default(PENDING)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  reviewerId    Int?
+  reviewedAt    DateTime?
+  reviewMessage String?
+  operation     PendingOperationType @default(UPDATE)
+  block         Block?               @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  reviewer      User?                @relation("ReviewedBlocks", fields: [reviewerId], references: [id])
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@index([status])
-    @@index([userId])
-    @@index([blockId])
+  @@index([status])
+  @@index([userId])
+  @@index([blockId])
 }
 
 model Game {
-    id         Int         @id @default(autoincrement())
-    title      String      @unique
-    checklists Checklist[]
-    tags       Tag[]
-    pages      Page[]
-    sections   Section[]
-    slug          String?
-    navbar        Json?
-    theme         Json?
-    discordUrl    String?
-    isActive      Boolean        @default(true)
-    contributions       Contribution[]
-    images              GameImage[]
-    unitCategories      UnitCategory[]
-    units               Unit[]
-    boards              Board[]
-    showSupportButton   Boolean        @default(true)
-    tierCategories      TierCategory[]
+  id                Int            @id @default(autoincrement())
+  title             String         @unique
+  slug              String?
+  navbar            Json?
+  theme             Json?
+  discordUrl        String?
+  showSupportButton Boolean        @default(true)
+  isActive          Boolean        @default(true)
+  boards            Board[]
+  checklists        Checklist[]
+  contributions     Contribution[]
+  images            GameImage[]
+  pages             Page[]
+  sections          Section[]
+  tierCategories    TierCategory[]
+  units             Unit[]
+  unitCategories    UnitCategory[]
+  tags              Tag[]          @relation("GameToTag")
 }
 
 model Section {
-    id     Int    @id @default(autoincrement())
-    title  String
-    order  Int    @default(0)
-    game   Game   @relation(fields: [gameId], references: [id])
-    gameId Int
-    pages  Page[]
+  id     Int    @id @default(autoincrement())
+  title  String
+  order  Int    @default(0)
+  gameId Int
+  pages  Page[]
+  game   Game   @relation(fields: [gameId], references: [id])
 
-    @@unique([gameId, title])
+  @@unique([gameId, title])
 }
 
 model Checklist {
-    id             Int             @id @default(autoincrement())
-    title          String
-    game           Game            @relation(fields: [gameId], references: [id])
-    gameId         Int
-    checklistItems ChecklistItem[]
-    configuration  String? // The layout of the checklist, e.g. "Flea Hunting Checklist" to be read by the frontend
+  id             Int             @id @default(autoincrement())
+  title          String
+  gameId         Int
+  configuration  String?
+  game           Game            @relation(fields: [gameId], references: [id])
+  checklistItems ChecklistItem[]
 
-    @@unique([gameId, title])
+  @@unique([gameId, title])
 }
 
 model ChecklistItem {
-    id          Int       @id @default(autoincrement())
-    title       String
-    checklist   Checklist @relation(fields: [checklistId], references: [id])
-    checklistId Int
-    imageOne    String?
-    imageTwo    String?
-    description String?
-    tags        Tag[]
+  id          Int       @id @default(autoincrement())
+  title       String
+  checklistId Int
+  imageOne    String?
+  imageTwo    String?
+  description String?
+  checklist   Checklist @relation(fields: [checklistId], references: [id])
+  tags        Tag[]     @relation("ChecklistItemToTag")
 
-    @@unique([checklistId, title])
+  @@unique([checklistId, title])
 }
 
 model Tag {
-    id             Int             @id @default(autoincrement())
-    title          String          @unique
-    checklistItems ChecklistItem[]
-    games          Game[]
+  id             Int             @id @default(autoincrement())
+  title          String          @unique
+  checklistItems ChecklistItem[] @relation("ChecklistItemToTag")
+  games          Game[]          @relation("GameToTag")
 }
 
 model Page {
-    id          Int      @id @default(autoincrement())
-    title       String
-    slug        String?
-    navbarTitle String?
-    description String?
-    wide        Boolean  @default(false)
-    views       Int      @default(0)
-    blocks      Block[]
-    game        Game?    @relation(fields: [gameId], references: [id])
-    gameId      Int?
-    section     Section? @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-    sectionId   Int?
-    sort          Int?
-    contributors  User[]         @relation("PageContributors")
-    claimedBy     User?          @relation("PageClaimed", fields: [claimedById], references: [id], onDelete: SetNull)
-    claimedById   Int?
-    contributions Contribution[]
-    comments      Comment[]
-    pageViews     PageView[]
+  id            Int            @id @default(autoincrement())
+  title         String
+  slug          String?
+  navbarTitle   String?
+  gameId        Int?
+  sectionId     Int?
+  sort          Int?
+  description   String?
+  wide          Boolean        @default(false)
+  views         Int            @default(0)
+  claimedById   Int?
+  blocks        Block[]
+  comments      Comment[]
+  contributions Contribution[]
+  claimedBy     User?          @relation("PageClaimed", fields: [claimedById], references: [id], onUpdate: NoAction)
+  game          Game?          @relation(fields: [gameId], references: [id])
+  section       Section?       @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  PageImage     PageImage[]
+  pageViews     PageView[]
+  contributors  User[]         @relation("PageContributors")
 
-    @@unique([slug, gameId])
+  @@unique([slug, gameId])
 }
 
 model PageView {
-    id          Int      @id @default(autoincrement())
-    page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-    pageId      Int
-    claimedBy   User?    @relation("PageViewClaimed", fields: [claimedById], references: [id], onDelete: SetNull)
-    claimedById Int?
-    createdAt   DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  pageId      Int
+  claimedById Int?
+  createdAt   DateTime @default(now())
+  claimedBy   User?    @relation("PageViewClaimed", fields: [claimedById], references: [id], onUpdate: NoAction)
+  page        Page     @relation(fields: [pageId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-    @@index([pageId])
-    @@index([claimedById])
-    @@index([createdAt])
+  @@index([pageId])
+  @@index([claimedById])
+  @@index([createdAt])
 }
 
 model Block {
-    id            Int            @id @default(autoincrement())
-    page          Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
-    pageId        Int
-    content       Json?
-    order         Int?
-    type          String?
-    files         File[]
-    pendingBlocks PendingBlock[]
-}
-
-enum FileStatus {
-    PENDING_UPLOAD
-    ACTIVE
-    PENDING_DELETION
-    DELETED
+  id            Int            @id @default(autoincrement())
+  pageId        Int
+  content       Json?
+  order         Int?
+  type          String?
+  page          Page           @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  files         File[]
+  pendingBlocks PendingBlock[]
 }
 
 model TierCategory {
-    id      Int        @id @default(autoincrement())
-    gameId  Int
-    game    Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    name    String
-    order   Int        @default(0)
-    items   TierItem[]
-    modes   TierMode[]
+  id     Int        @id @default(autoincrement())
+  gameId Int
+  name   String
+  order  Int        @default(0)
+  game   Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  items  TierItem[]
+  modes  TierMode[]
 
-    @@index([gameId])
+  @@index([gameId])
 }
 
 model TierItem {
-    id         Int          @id @default(autoincrement())
-    categoryId Int
-    category   TierCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-    name       String
-    imageUrl   String
-    order      Int          @default(0)
-    entries    TierEntry[]
+  id         Int          @id @default(autoincrement())
+  categoryId Int
+  name       String
+  imageUrl   String
+  order      Int          @default(0)
+  entries    TierEntry[]
+  category   TierCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-    @@index([categoryId])
+  @@index([categoryId])
 }
 
 model TierMode {
-    id         Int           @id @default(autoincrement())
-    categoryId Int
-    category   TierCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-    name       String
-    color      String
-    order      Int           @default(0)
-    tiers      TierTier[]
-    entries    TierEntry[]
-    sections   TierSection[]
+  id         Int           @id @default(autoincrement())
+  categoryId Int
+  name       String
+  color      String
+  order      Int           @default(0)
+  entries    TierEntry[]
+  category   TierCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  sections   TierSection[]
+  tiers      TierTier[]
 
-    @@index([categoryId])
+  @@index([categoryId])
 }
 
 model TierSection {
-    id      Int      @id @default(autoincrement())
-    modeId  Int
-    mode    TierMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
-    name    String
-    order   Int      @default(0)
+  id     Int      @id @default(autoincrement())
+  modeId Int
+  name   String
+  order  Int      @default(0)
+  mode   TierMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
 
-    @@index([modeId])
+  @@index([modeId])
 }
 
 model TierTier {
-    id      Int         @id @default(autoincrement())
-    modeId  Int
-    mode    TierMode    @relation(fields: [modeId], references: [id], onDelete: Cascade)
-    name    String
-    color   String
-    order   Int         @default(0)
-    entries TierEntry[]
+  id      Int         @id @default(autoincrement())
+  modeId  Int
+  name    String
+  color   String
+  order   Int         @default(0)
+  entries TierEntry[]
+  mode    TierMode    @relation(fields: [modeId], references: [id], onDelete: Cascade)
 
-    @@index([modeId])
+  @@index([modeId])
 }
 
 model TierEntry {
-    id        Int      @id @default(autoincrement())
-    modeId    Int
-    mode      TierMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
-    tierId    Int
-    tier      TierTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
-    itemId    Int
-    item      TierItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-    sectionId Int?
-    order     Int      @default(0)
+  id        Int      @id @default(autoincrement())
+  modeId    Int
+  tierId    Int
+  itemId    Int
+  order     Int      @default(0)
+  sectionId Int?
+  item      TierItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  mode      TierMode @relation(fields: [modeId], references: [id], onDelete: Cascade)
+  tier      TierTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
 
-    @@index([modeId])
-    @@index([tierId])
+  @@index([modeId])
+  @@index([tierId])
 }
 
 model Board {
-    id      Int     @id @default(autoincrement())
-    gameId  Int
-    game    Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    name    String
-    rows    Int
-    cols    Int
-    order       Int     @default(0)
-    bgImage     String?
-    bgSize      String? @default("cover")
-    bgX         Float?  @default(0)
-    bgY         Float?  @default(0)
-    heightScale Float?  @default(1.0)
-    widthScale  Float?  @default(1.0)
-    bgPaddingX  Float?  @default(0)
-    bgPaddingY  Float?  @default(0)
-    gridOffsetX Float?  @default(0)
-    gridOffsetY Float?  @default(0)
+  id          Int     @id @default(autoincrement())
+  gameId      Int
+  name        String
+  rows        Int
+  cols        Int
+  bgImage     String?
+  bgSize      String? @default("cover")
+  bgX         Float?  @default(0)
+  bgY         Float?  @default(0)
+  heightScale Float?  @default(1.0)
+  widthScale  Float?  @default(1.0)
+  bgPaddingX  Float?  @default(0)
+  bgPaddingY  Float?  @default(0)
+  gridOffsetX Float?  @default(0)
+  gridOffsetY Float?  @default(0)
+  order       Int     @default(0)
+  game        Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
-    @@index([gameId])
+  @@index([gameId])
 }
 
 model UnitCategory {
-    id     Int    @id @default(autoincrement())
-    name   String
-    order  Int    @default(0)
-    gameId Int
-    game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    units  Unit[]
+  id     Int    @id @default(autoincrement())
+  name   String
+  order  Int    @default(0)
+  gameId Int
+  units  Unit[]
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
-    @@index([gameId])
+  @@index([gameId])
 }
 
 model Unit {
-    id         Int          @id @default(autoincrement())
-    name       String
-    imageUrl   String
-    categoryId Int
-    category   UnitCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-    gameId     Int
-    game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  id         Int          @id @default(autoincrement())
+  name       String
+  imageUrl   String
+  categoryId Int
+  gameId     Int
+  category   UnitCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  game       Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
-    @@index([gameId])
-    @@index([categoryId])
+  @@index([gameId])
+  @@index([categoryId])
 }
 
 model GameImage {
-    id        Int      @id @default(autoincrement())
-    title     String
-    filename  String
-    url       String
-    category  String?
-    game      Game?    @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    gameId    Int?
-    createdAt DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  title     String
+  filename  String
+  url       String
+  gameId    Int?
+  createdAt DateTime @default(now())
+  category  String?
+  game      Game?    @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
-    @@index([gameId])
+  @@index([gameId])
 }
 
 model Contribution {
-    id        Int      @id @default(autoincrement())
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId    Int
-    page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
-    pageId    Int
-    game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-    gameId    Int
-    createdAt DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  pageId    Int
+  gameId    Int
+  createdAt DateTime @default(now())
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@index([gameId, userId])
+  @@index([gameId, userId])
 }
 
 model File {
-    id        Int        @id @default(autoincrement())
-    title     String
-    filename  String
-    url       String
-    block     Block?     @relation(fields: [blockId], references: [id], onDelete: Cascade)
-    blockId   Int?
-    status    FileStatus @default(PENDING_UPLOAD)
-    createdAt DateTime   @default(now())
+  id        Int        @id @default(autoincrement())
+  title     String
+  filename  String
+  url       String
+  blockId   Int?
+  status    FileStatus @default(PENDING_UPLOAD)
+  createdAt DateTime   @default(now())
+  block     Block?     @relation(fields: [blockId], references: [id], onDelete: Cascade)
 }
 
 model Comment {
-    id          Int             @id @default(autoincrement())
-    page        Page            @relation(fields: [pageId], references: [id], onDelete: Cascade)
-    pageId      Int
-    user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId      Int
-    username    String
-    text        String
-    createdAt   DateTime        @default(now())
-    updatedAt   DateTime        @updatedAt
-    parent      Comment?        @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-    parentId    Int?
-    replies     Comment[]       @relation("CommentReplies")
-    upvotes     CommentUpvote[]
+  id        Int             @id @default(autoincrement())
+  pageId    Int
+  userId    Int
+  username  String
+  text      String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  parentId  Int?
+  page      Page            @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  parent    Comment?        @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]       @relation("CommentReplies")
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  upvotes   CommentUpvote[]
 
-    @@index([pageId])
-    @@index([parentId])
+  @@index([pageId])
+  @@index([parentId])
 }
 
 model CommentUpvote {
-    id        Int     @id @default(autoincrement())
-    comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-    commentId Int
-    user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId    Int
+  id        Int     @id @default(autoincrement())
+  commentId Int
+  userId    Int
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([commentId, userId])
-    @@index([commentId])
+  @@unique([commentId, userId])
+  @@index([commentId])
 }
 
+model PageImage {
+  id        Int      @id @default(autoincrement())
+  title     String
+  filename  String
+  url       String
+  category  String?
+  pageId    Int
+  createdAt DateTime @default(now())
+  Page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  USER
+}
+
+enum ReviewStatus {
+  PENDING
+  ACCEPTED
+  REFUSED
+}
+
+enum PendingOperationType {
+  CREATE
+  UPDATE
+  DELETE
+  ADD_FILE
+  DELETE_FILE
+}
+
+enum FileStatus {
+  PENDING_UPLOAD
+  ACTIVE
+  PENDING_DELETION
+  DELETED
+}
+
+model IdleCharacter {
+  id          Int    @id @default(autoincrement())
+  userId      Int    @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  level       Int    @default(1)
+  xp          Int    @default(0)
+  baseAttack  Int    @default(5)
+  baseDefense Int    @default(0)
+  baseMaxHp   Int    @default(100)
+
+  currentZone     String    @default("forest")
+  totalKills      Int       @default(0)
+  lastOnline      DateTime?
+  currentEnemyId  Int?
+  currentEnemy    IdleEnemy? @relation(fields: [currentEnemyId], references: [id], onDelete: SetNull)
+
+  inventory   IdleInventoryItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model IdleItem {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  description String?
+  type        String
+  rarity      String @default("common")
+  statBonus   Json?
+  iconUrl     String?
+
+  droppedBy   IdleEnemyDrop[]
+  instances   IdleInventoryItem[]
+}
+
+model IdleInventoryItem {
+  id          Int           @id @default(autoincrement())
+  characterId Int
+  itemId      Int
+  quantity    Int           @default(1)
+  equipped    Boolean       @default(false)
+  character   IdleCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  item        IdleItem      @relation(fields: [itemId], references: [id])
+
+  @@unique([characterId, itemId])
+  @@index([characterId])
+}
+
+model IdleEnemy {
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  zone      String
+  level     Int    @default(1)
+  hp        Int
+  attack    Int
+  defense   Int
+  xpReward  Int
+
+  drops       IdleEnemyDrop[]
+  characters  IdleCharacter[]
+
+  @@index([zone])
+}
+
+model IdleEnemyDrop {
+  id       Int       @id @default(autoincrement())
+  enemyId  Int
+  itemId   Int
+  dropRate Float
+  enemy    IdleEnemy @relation(fields: [enemyId], references: [id], onDelete: Cascade)
+  item     IdleItem  @relation(fields: [itemId], references: [id])
+
+  @@index([enemyId])
+}
