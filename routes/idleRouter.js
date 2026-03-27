@@ -7,6 +7,8 @@ const router = Router();
 router.get("/character", requireAuth, idleController.getCharacter);
 router.post("/character/tick", requireAuth, idleController.tick);
 router.post("/character/equip/:inventoryItemId", requireAuth, idleController.equip);
+router.delete("/character/item/:itemId", requireAuth, idleController.discard);
+router.delete("/character/items", requireAuth, idleController.discardMany);
 router.post("/character/zone", requireAuth, idleController.changeZone);
 router.get("/enemies", idleController.getEnemies);
 router.get("/zones", idleController.getZones);

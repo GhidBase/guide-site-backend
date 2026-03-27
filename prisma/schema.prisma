@@ -412,6 +412,7 @@ model IdleCharacter {
   currentEnemy    IdleEnemy? @relation(fields: [currentEnemyId], references: [id], onDelete: SetNull)
 
   inventory   IdleInventoryItem[]
+  weapons     IdleWeapon[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -456,6 +457,28 @@ model IdleEnemy {
   characters  IdleCharacter[]
 
   @@index([zone])
+}
+
+model IdleWeapon {
+  id          Int           @id @default(autoincrement())
+  characterId Int
+  character   IdleCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  name        String
+  weaponType  String
+  typeLabel   String
+  rarity      String
+  origin      String
+  level       Int
+  stats       Json
+  baseStats   Json
+  parts       Json
+  totalRating Int
+  equipped    Boolean       @default(false)
+
+  createdAt   DateTime      @default(now())
+
+  @@index([characterId])
 }
 
 model IdleEnemyDrop {

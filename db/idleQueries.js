@@ -1,24 +1,49 @@
 import { prisma } from "../lib/prisma.js";
+import { generateWeapon } from "../utils/weaponGenerator.js";
 
 const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // 8 hours
+
+// Item types that can drop
+const DROP_TYPES = ["sword", "longsword", "greatsword", "dagger", "chest", "helm", "legs"];
+
+// Equipment slot groups — equipping unequips others in the same slot only
+const SLOT_GROUPS = {
+    weapon: ["sword", "longsword", "greatsword", "dagger"],
+    chest:  ["chest"],
+    helm:   ["helm"],
+    legs:   ["legs"],
+};
+
+function getSlotTypes(weaponType) {
+    for (const types of Object.values(SLOT_GROUPS)) {
+        if (types.includes(weaponType)) return types;
+    }
+    return [weaponType];
+}
+
+// Base drop chance per kill (20%)
+const WEAPON_DROP_CHANCE = 0.2;
+
+function randomDropType() {
+    return DROP_TYPES[Math.floor(Math.random() * DROP_TYPES.length)];
+}
 
 // XP required to reach a given level (simple quadratic curve)
 export function xpForLevel(level) {
     return Math.floor(50 * Math.pow(level, 1.8));
 }
 
-// Compute effective stats including equipped item bonuses
+// Compute effective stats from equipped generated weapons
 function computeStats(character) {
     let attack = character.baseAttack;
     let defense = character.baseDefense;
     let maxHp = character.baseMaxHp;
 
-    for (const invItem of character.inventory) {
-        if (invItem.equipped && invItem.item.statBonus) {
-            const bonus = invItem.item.statBonus;
-            if (bonus.attack) attack += bonus.attack;
-            if (bonus.defense) defense += bonus.defense;
-            if (bonus.maxHp) maxHp += bonus.maxHp;
+    for (const weapon of character.weapons) {
+        if (weapon.equipped) {
+            const stats = weapon.stats;
+            if (stats.attack) attack += stats.attack;
+            if (stats.defense) defense += stats.defense;
         }
     }
 
@@ -28,6 +53,23 @@ function computeStats(character) {
 function formatCharacter(character) {
     const stats = computeStats(character);
     const xpNeeded = xpForLevel(character.level + 1);
+
+    const weaponItems = character.weapons.map((w) => ({
+        id: w.id,
+        source: "weapon",
+        name: w.name,
+        type: w.weaponType,
+        typeLabel: w.typeLabel,
+        rarity: w.rarity,
+        origin: w.origin,
+        level: w.level,
+        stats: w.stats,
+        baseStats: w.baseStats,
+        parts: w.parts,
+        totalRating: w.totalRating,
+        equipped: w.equipped,
+        quantity: 1,
+    }));
 
     return {
         id: character.id,
@@ -43,90 +85,29 @@ function formatCharacter(character) {
         attack: stats.attack,
         defense: stats.defense,
         maxHp: stats.maxHp,
-        inventory: character.inventory.map((inv) => ({
-            id: inv.id,
-            itemId: inv.itemId,
-            name: inv.item.name,
-            description: inv.item.description,
-            type: inv.item.type,
-            rarity: inv.item.rarity,
-            statBonus: inv.item.statBonus,
-            iconUrl: inv.item.iconUrl,
-            quantity: inv.quantity,
-            equipped: inv.equipped,
-        })),
+        inventory: weaponItems,
         createdAt: character.createdAt,
         updatedAt: character.updatedAt,
     };
 }
 
 const characterInclude = {
-    inventory: {
-        include: { item: true },
-        orderBy: { id: "asc" },
+    weapons: {
+        orderBy: { id: "desc" },
     },
 };
 
-// Shared combat resolution logic used by both live ticks and offline catch-up
-function resolveCombat(character, enemy, seconds) {
-    const stats = computeStats(character);
-    const damagePerHit = Math.max(1, stats.attack - enemy.defense);
-    const hitsToKill = Math.ceil(enemy.hp / damagePerHit);
-    const kills = Math.floor(seconds / hitsToKill);
-
-    if (kills === 0) return null;
-
-    // Roll drops
-    const dropMap = {};
+// Roll weapon drops for a number of kills against an enemy
+function rollWeaponDrops(kills, enemyLevel) {
+    const drops = [];
     for (let k = 0; k < kills; k++) {
-        for (const drop of enemy.drops) {
-            if (Math.random() < drop.dropRate) {
-                const key = drop.item.id;
-                if (!dropMap[key]) dropMap[key] = { item: drop.item, count: 0 };
-                dropMap[key].count++;
-            }
+        if (Math.random() < WEAPON_DROP_CHANCE) {
+            const type = randomDropType();
+            const weapon = generateWeapon(type, enemyLevel);
+            drops.push(weapon);
         }
     }
-
-    // Apply XP and level-ups
-    const xpGained = kills * enemy.xpReward;
-    let newXp = character.xp + xpGained;
-    let newLevel = character.level;
-    let levelUps = 0;
-
-    while (newXp >= xpForLevel(newLevel + 1)) {
-        newXp -= xpForLevel(newLevel + 1);
-        newLevel++;
-        levelUps++;
-    }
-
-    return { kills, xpGained, newXp, newLevel, levelUps, attackIncrease: levelUps, dropMap };
-}
-
-// Build Prisma transaction ops from a resolved combat result
-function buildCombatOps(characterId, result) {
-    const { kills, newXp, newLevel, attackIncrease, dropMap } = result;
-
-    const inventoryOps = Object.values(dropMap).map(({ item, count }) =>
-        prisma.idleInventoryItem.upsert({
-            where: { characterId_itemId: { characterId, itemId: item.id } },
-            update: { quantity: { increment: count } },
-            create: { characterId, itemId: item.id, quantity: count },
-        })
-    );
-
-    const characterUpdate = prisma.idleCharacter.update({
-        where: { id: characterId },
-        data: {
-            xp: newXp,
-            level: newLevel,
-            baseAttack: { increment: attackIncrease },
-            totalKills: { increment: kills },
-            lastOnline: new Date(),
-        },
-    });
-
-    return [characterUpdate, ...inventoryOps];
+    return drops;
 }
 
 export async function getOrCreateCharacter(userId) {
@@ -160,26 +141,68 @@ export async function getOrCreateCharacter(userId) {
         );
 
         if (secondsOffline >= 1) {
-            const result = resolveCombat(character, character.currentEnemy, secondsOffline);
-            if (result) {
-                await prisma.$transaction(buildCombatOps(character.id, result));
+            const stats = computeStats(character);
+            const damagePerHit = Math.max(1, stats.attack - character.currentEnemy.defense);
+            const hitsToKill = Math.ceil(character.currentEnemy.hp / damagePerHit);
+            const kills = Math.floor(secondsOffline / hitsToKill);
+
+            if (kills > 0) {
+                const xpGained = kills * character.currentEnemy.xpReward;
+                let newXp = character.xp + xpGained;
+                let newLevel = character.level;
+                let levelUps = 0;
+
+                while (newXp >= xpForLevel(newLevel + 1)) {
+                    newXp -= xpForLevel(newLevel + 1);
+                    newLevel++;
+                    levelUps++;
+                }
+
+                const weaponDrops = rollWeaponDrops(kills, character.currentEnemy.level);
+
+                await prisma.$transaction([
+                    prisma.idleCharacter.update({
+                        where: { id: character.id },
+                        data: {
+                            xp: newXp,
+                            level: newLevel,
+                            baseAttack: { increment: levelUps },
+                            totalKills: { increment: kills },
+                            lastOnline: new Date(),
+                        },
+                    }),
+                    ...weaponDrops.map((w) =>
+                        prisma.idleWeapon.create({
+                            data: {
+                                characterId: character.id,
+                                name: w.name,
+                                weaponType: w.type,
+                                typeLabel: w.typeLabel,
+                                rarity: w.rarity,
+                                origin: w.origin,
+                                level: w.level,
+                                stats: w.stats,
+                                baseStats: w.baseStats,
+                                parts: w.parts,
+                                totalRating: w.totalRating,
+                            },
+                        })
+                    ),
+                ]);
 
                 offlineGains = {
                     secondsOffline: Math.floor(secondsOffline),
-                    kills: result.kills,
-                    xpGained: result.xpGained,
-                    levelUps: result.levelUps,
-                    drops: Object.values(result.dropMap).map(({ item, count }) => ({
-                        itemId: item.id,
-                        name: item.name,
-                        rarity: item.rarity,
-                        iconUrl: item.iconUrl,
-                        count,
+                    kills,
+                    xpGained,
+                    levelUps,
+                    drops: weaponDrops.map((w) => ({
+                        name: w.name,
+                        rarity: w.rarity,
+                        count: 1,
                     })),
                     enemyName: character.currentEnemy.name,
                 };
 
-                // Reload after applying gains
                 character = await prisma.idleCharacter.findUnique({
                     where: { userId },
                     include: {
@@ -191,7 +214,6 @@ export async function getOrCreateCharacter(userId) {
         }
     }
 
-    // Always stamp lastOnline on load so we track when they were last here
     await prisma.idleCharacter.update({
         where: { id: character.id },
         data: { lastOnline: new Date() },
@@ -200,47 +222,30 @@ export async function getOrCreateCharacter(userId) {
     return { character: formatCharacter(character), offlineGains };
 }
 
-// Process a combat tick sent from the client.
 export async function processTick(userId, { enemyId, kills, durationSeconds }) {
     const [character, enemy] = await Promise.all([
         prisma.idleCharacter.findUnique({
             where: { userId },
             include: characterInclude,
         }),
-        prisma.idleEnemy.findUnique({
-            where: { id: enemyId },
-            include: { drops: { include: { item: true } } },
-        }),
+        prisma.idleEnemy.findUnique({ where: { id: enemyId } }),
     ]);
 
     if (!character) throw new Error("Character not found");
     if (!enemy) throw new Error("Enemy not found");
     if (enemy.zone !== character.currentZone) throw new Error("Enemy not in current zone");
 
-    // Server-side validation: cap kills to what's physically possible
+    // Server-side kill validation
     const stats = computeStats(character);
     const damagePerHit = Math.max(1, stats.attack - enemy.defense);
     const hitsToKill = Math.ceil(enemy.hp / damagePerHit);
-    const maxKills = Math.ceil((durationSeconds / hitsToKill) * 1.1); // 10% grace
+    const maxKills = Math.ceil((durationSeconds / hitsToKill) * 1.1);
     const validatedKills = Math.min(kills, Math.max(0, maxKills));
 
     if (validatedKills === 0) {
-        return { character: formatCharacter(character), drops: [], levelUps: 0 };
+        return { character: formatCharacter(character), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0 };
     }
 
-    // Roll drops server-side
-    const dropMap = {};
-    for (let k = 0; k < validatedKills; k++) {
-        for (const drop of enemy.drops) {
-            if (Math.random() < drop.dropRate) {
-                const key = drop.item.id;
-                if (!dropMap[key]) dropMap[key] = { item: drop.item, count: 0 };
-                dropMap[key].count++;
-            }
-        }
-    }
-
-    // Apply XP and check for level-ups
     const xpGained = validatedKills * enemy.xpReward;
     let newXp = character.xp + xpGained;
     let newLevel = character.level;
@@ -252,13 +257,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
         levelUps++;
     }
 
-    const inventoryOps = Object.values(dropMap).map(({ item, count }) =>
-        prisma.idleInventoryItem.upsert({
-            where: { characterId_itemId: { characterId: character.id, itemId: item.id } },
-            update: { quantity: { increment: count } },
-            create: { characterId: character.id, itemId: item.id, quantity: count },
-        })
-    );
+    const weaponDrops = rollWeaponDrops(validatedKills, enemy.level);
 
     await prisma.$transaction([
         prisma.idleCharacter.update({
@@ -272,7 +271,23 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
                 currentEnemyId: enemyId,
             },
         }),
-        ...inventoryOps,
+        ...weaponDrops.map((w) =>
+            prisma.idleWeapon.create({
+                data: {
+                    characterId: character.id,
+                    name: w.name,
+                    weaponType: w.type,
+                    typeLabel: w.typeLabel,
+                    rarity: w.rarity,
+                    origin: w.origin,
+                    level: w.level,
+                    stats: w.stats,
+                    baseStats: w.baseStats,
+                    parts: w.parts,
+                    totalRating: w.totalRating,
+                },
+            })
+        ),
     ]);
 
     const updatedCharacter = await prisma.idleCharacter.findUnique({
@@ -282,12 +297,10 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
 
     return {
         character: formatCharacter(updatedCharacter),
-        drops: Object.values(dropMap).map(({ item, count }) => ({
-            itemId: item.id,
-            name: item.name,
-            rarity: item.rarity,
-            iconUrl: item.iconUrl,
-            count,
+        drops: weaponDrops.map((w) => ({
+            name: w.name,
+            rarity: w.rarity,
+            count: 1,
         })),
         levelUps,
         xpGained,
@@ -295,37 +308,105 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
     };
 }
 
-export async function equipItem(userId, inventoryItemId, equipped) {
+export async function equipItem(userId, inventoryItemId, { equipped, source }) {
     const character = await prisma.idleCharacter.findUnique({ where: { userId } });
     if (!character) throw new Error("Character not found");
 
-    const invItem = await prisma.idleInventoryItem.findFirst({
-        where: { id: inventoryItemId, characterId: character.id },
-        include: { item: true },
-    });
-    if (!invItem) throw new Error("Item not found in inventory");
+    if (source === "weapon") {
+        const weapon = await prisma.idleWeapon.findFirst({
+            where: { id: inventoryItemId, characterId: character.id },
+        });
+        if (!weapon) throw new Error("Weapon not found");
 
-    if (equipped && (invItem.item.type === "weapon" || invItem.item.type === "armor")) {
-        await prisma.idleInventoryItem.updateMany({
-            where: {
-                characterId: character.id,
-                equipped: true,
-                item: { type: invItem.item.type },
-            },
-            data: { equipped: false },
+        if (equipped) {
+            const slotTypes = getSlotTypes(weapon.weaponType);
+            await prisma.idleWeapon.updateMany({
+                where: { characterId: character.id, equipped: true, weaponType: { in: slotTypes } },
+                data: { equipped: false },
+            });
+        }
+
+        await prisma.idleWeapon.update({
+            where: { id: inventoryItemId },
+            data: { equipped },
+        });
+    } else {
+        const invItem = await prisma.idleInventoryItem.findFirst({
+            where: { id: inventoryItemId, characterId: character.id },
+            include: { item: true },
+        });
+        if (!invItem) throw new Error("Item not found in inventory");
+
+        if (equipped && (invItem.item.type === "weapon" || invItem.item.type === "armor")) {
+            await prisma.idleInventoryItem.updateMany({
+                where: {
+                    characterId: character.id,
+                    equipped: true,
+                    item: { type: invItem.item.type },
+                },
+                data: { equipped: false },
+            });
+        }
+
+        await prisma.idleInventoryItem.update({
+            where: { id: inventoryItemId },
+            data: { equipped },
         });
     }
-
-    await prisma.idleInventoryItem.update({
-        where: { id: inventoryItemId },
-        data: { equipped },
-    });
 
     const updated = await prisma.idleCharacter.findUnique({
         where: { id: character.id },
         include: characterInclude,
     });
 
+    return formatCharacter(updated);
+}
+
+export async function discardMany(userId, items) {
+    const character = await prisma.idleCharacter.findUnique({ where: { userId } });
+    if (!character) throw new Error("Character not found");
+
+    const weaponIds = items.filter((i) => i.source === "weapon").map((i) => i.id);
+    const itemIds   = items.filter((i) => i.source !== "weapon").map((i) => i.id);
+
+    await prisma.$transaction([
+        ...(weaponIds.length > 0 ? [prisma.idleWeapon.deleteMany({
+            where: { id: { in: weaponIds }, characterId: character.id },
+        })] : []),
+        ...(itemIds.length > 0 ? [prisma.idleInventoryItem.deleteMany({
+            where: { id: { in: itemIds }, characterId: character.id },
+        })] : []),
+    ]);
+
+    const updated = await prisma.idleCharacter.findUnique({
+        where: { id: character.id },
+        include: characterInclude,
+    });
+    return formatCharacter(updated);
+}
+
+export async function discardItem(userId, itemId, source) {
+    const character = await prisma.idleCharacter.findUnique({ where: { userId } });
+    if (!character) throw new Error("Character not found");
+
+    if (source === "weapon") {
+        const weapon = await prisma.idleWeapon.findFirst({
+            where: { id: itemId, characterId: character.id },
+        });
+        if (!weapon) throw new Error("Weapon not found");
+        await prisma.idleWeapon.delete({ where: { id: itemId } });
+    } else {
+        const invItem = await prisma.idleInventoryItem.findFirst({
+            where: { id: itemId, characterId: character.id },
+        });
+        if (!invItem) throw new Error("Item not found");
+        await prisma.idleInventoryItem.delete({ where: { id: itemId } });
+    }
+
+    const updated = await prisma.idleCharacter.findUnique({
+        where: { id: character.id },
+        include: characterInclude,
+    });
     return formatCharacter(updated);
 }
 
@@ -348,11 +429,6 @@ export async function changeZone(userId, zone) {
 export async function getEnemiesForZone(zone) {
     return prisma.idleEnemy.findMany({
         where: { zone },
-        include: {
-            drops: {
-                include: { item: { select: { id: true, name: true, rarity: true, iconUrl: true } } },
-            },
-        },
         orderBy: { level: "asc" },
     });
 }

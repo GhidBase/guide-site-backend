@@ -35,17 +35,17 @@ async function tick(req, res) {
 
 async function equip(req, res) {
     const inventoryItemId = +req.params.inventoryItemId;
-    const { equipped } = req.body;
+    const { equipped, source } = req.body;
 
     if (typeof equipped !== "boolean") {
         return res.status(400).json({ error: "equipped (boolean) is required" });
     }
 
     try {
-        const character = await db.equipItem(req.user.id, inventoryItemId, equipped);
+        const character = await db.equipItem(req.user.id, inventoryItemId, { equipped, source });
         res.json(character);
     } catch (err) {
-        if (err.message === "Character not found" || err.message === "Item not found in inventory") {
+        if (err.message === "Character not found" || err.message === "Item not found in inventory" || err.message === "Weapon not found") {
             return res.status(404).json({ error: err.message });
         }
         res.status(500).json({ error: err.message });
@@ -92,4 +92,32 @@ async function getZones(req, res) {
     }
 }
 
-export default { getCharacter, tick, equip, changeZone, getEnemies, getZones };
+async function discardMany(req, res) {
+    const { items } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "items array is required" });
+    }
+    try {
+        const character = await db.discardMany(req.user.id, items);
+        res.json(character);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
+async function discard(req, res) {
+    const itemId = +req.params.itemId;
+    const { source } = req.body;
+
+    if (!source) return res.status(400).json({ error: "source is required" });
+
+    try {
+        const character = await db.discardItem(req.user.id, itemId, source);
+        res.json(character);
+    } catch (err) {
+        if (err.message.includes("not found")) return res.status(404).json({ error: err.message });
+        res.status(500).json({ error: err.message });
+    }
+}
+
+export default { getCharacter, tick, equip, discard, discardMany, changeZone, getEnemies, getZones };
