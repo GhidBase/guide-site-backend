@@ -84,6 +84,12 @@ function simulateCombat(stats, enemy, seconds, startingHp) {
         timeLeft -= timeToKillEnemy;
     }
 
+    // Account for damage taken during the partial kill cycle remaining
+    if (timeLeft > 0 && hp > 0) {
+        const partialDamage = (timeLeft / timeToKillEnemy) * hpLostPerKill;
+        hp = Math.max(0, hp - partialDamage);
+    }
+
     return { kills, hpRemaining: Math.max(0, hp) };
 }
 
@@ -299,9 +305,17 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
         return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0 };
     }
 
-    // Simulate combat with HP drain; clamp kills to what HP allows
-    const { kills: maxSimKills, hpRemaining } = simulateCombat(stats, enemy, durationSeconds, character.currentHp);
-    const validatedKills = Math.min(kills, Math.ceil(maxSimKills * 1.1));
+    // Compute max plausible kills via continuous kill rate (avoids simulateCombat returning 0
+    // when one kill takes longer than the tick duration)
+    const _dmgPerHit = Math.max(1, (stats.attack + stats.magic) - enemy.defense);
+    const _hitsToKill = Math.max(1, Math.ceil(enemy.hp / _dmgPerHit));
+    const _attacksPerSec = 0.5 + stats.speed / 50;
+    const _killsPerSec = _attacksPerSec / _hitsToKill;
+    const maxAllowed = Math.ceil(_killsPerSec * durationSeconds * 1.2);
+    const validatedKills = Math.min(kills, maxAllowed);
+
+    // Still use simulateCombat for accurate HP remaining
+    const { hpRemaining } = simulateCombat(stats, enemy, durationSeconds, character.currentHp);
 
     if (validatedKills === 0) {
         await prisma.idleCharacter.update({ where: { id: character.id }, data: { currentHp: Math.round(hpRemaining), lastOnline: new Date() } });
