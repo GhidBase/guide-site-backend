@@ -61,12 +61,15 @@ function simulateCombat(stats, enemy, seconds, startingHp) {
     const { attack, defense, maxHp, speed, magic } = stats;
 
     const attacksPerSec = 0.5 + speed / 50;
-    const dmgPerHit = Math.max(1, (attack + magic) - enemy.defense);
+    const k = 50 * enemy.level;
+    const playerReduction = enemy.defense / (enemy.defense + k);
+    const dmgPerHit = Math.max(1, Math.round((attack + magic) * (1 - playerReduction)));
     const hitsToKillEnemy = Math.max(1, Math.ceil(enemy.hp / dmgPerHit));
     const timeToKillEnemy = hitsToKillEnemy / attacksPerSec;
 
     const enemyAttackSpeed = enemy.attackSpeed ?? 1.0;
-    const enemyDmgPerHit = Math.max(1, enemy.attack - defense);
+    const enemyReduction = defense / (defense + k);
+    const enemyDmgPerHit = Math.max(1, Math.round(enemy.attack * (1 - enemyReduction)));
     const hpLostPerKill = enemyDmgPerHit * enemyAttackSpeed * timeToKillEnemy;
 
     let hp = startingHp;
@@ -307,7 +310,9 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
 
     // Compute max plausible kills via continuous kill rate (avoids simulateCombat returning 0
     // when one kill takes longer than the tick duration)
-    const _dmgPerHit = Math.max(1, (stats.attack + stats.magic) - enemy.defense);
+    const _k = 50 * enemy.level;
+    const _playerReduction = enemy.defense / (enemy.defense + _k);
+    const _dmgPerHit = Math.max(1, Math.round((stats.attack + stats.magic) * (1 - _playerReduction)));
     const _hitsToKill = Math.max(1, Math.ceil(enemy.hp / _dmgPerHit));
     const _attacksPerSec = 0.5 + stats.speed / 50;
     const _killsPerSec = _attacksPerSec / _hitsToKill;

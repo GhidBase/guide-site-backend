@@ -17,19 +17,19 @@ const items = [
 
 const enemies = [
     // Forest (starter zone, levels 1-5)
-    { name: "Forest Goblin", zone: "forest", level: 1, hp: 20, attack: 3, defense: 0, attackSpeed: 0.6, xpReward: 10 },
-    { name: "Wild Wolf", zone: "forest", level: 3, hp: 40, attack: 6, defense: 1, attackSpeed: 1.0, xpReward: 20 },
-    { name: "Forest Troll", zone: "forest", level: 5, hp: 80, attack: 10, defense: 3, attackSpeed: 0.4, xpReward: 40 },
+    { name: "Forest Goblin", zone: "forest", level: 1, hp: 100, attack: 6, defense: 5, attackSpeed: 0.6, xpReward: 50 },
+    { name: "Wild Wolf", zone: "forest", level: 3, hp: 250, attack: 15, defense: 15, attackSpeed: 1.0, xpReward: 100 },
+    { name: "Forest Troll", zone: "forest", level: 5, hp: 400, attack: 28, defense: 20, attackSpeed: 0.4, xpReward: 200 },
 
     // Cave (mid zone, levels 6-12)
-    { name: "Cave Bat", zone: "cave", level: 6, hp: 60, attack: 12, defense: 2, attackSpeed: 1.5, xpReward: 55 },
-    { name: "Rock Golem", zone: "cave", level: 9, hp: 150, attack: 18, defense: 8, attackSpeed: 0.3, xpReward: 90 },
-    { name: "Cave Troll", zone: "cave", level: 12, hp: 250, attack: 25, defense: 12, attackSpeed: 0.45, xpReward: 140 },
+    { name: "Cave Bat", zone: "cave", level: 6, hp: 550, attack: 42, defense: 35, attackSpeed: 1.5, xpReward: 280 },
+    { name: "Rock Golem", zone: "cave", level: 9, hp: 850, attack: 62, defense: 55, attackSpeed: 0.3, xpReward: 450 },
+    { name: "Cave Troll", zone: "cave", level: 12, hp: 1300, attack: 85, defense: 70, attackSpeed: 0.45, xpReward: 650 },
 
     // Dungeon (hard zone, levels 13-20)
-    { name: "Skeleton Warrior", zone: "dungeon", level: 13, hp: 200, attack: 30, defense: 15, attackSpeed: 0.7, xpReward: 180 },
-    { name: "Dark Knight", zone: "dungeon", level: 17, hp: 400, attack: 45, defense: 22, attackSpeed: 0.6, xpReward: 280 },
-    { name: "Ancient Dragon", zone: "dungeon", level: 20, hp: 800, attack: 70, defense: 35, attackSpeed: 0.35, xpReward: 500 },
+    { name: "Skeleton Warrior", zone: "dungeon", level: 13, hp: 1800, attack: 100, defense: 100, attackSpeed: 0.7, xpReward: 900 },
+    { name: "Dark Knight", zone: "dungeon", level: 17, hp: 2500, attack: 135, defense: 125, attackSpeed: 0.6, xpReward: 1400 },
+    { name: "Ancient Dragon", zone: "dungeon", level: 20, hp: 5000, attack: 180, defense: 175, attackSpeed: 0.35, xpReward: 2500 },
 ];
 
 // Drop table: [enemyName, itemName, dropRate]

@@ -68,7 +68,7 @@ const GRIP_POOL = [
         name: "Soldier's Grip",
         rating: 1,
         prefix: "Reliable",
-        stats: { attack: 1, defense: 1 },
+        stats: { attack: 1 },
     },
     {
         id: "g_h2",
@@ -76,7 +76,7 @@ const GRIP_POOL = [
         name: "Knight's Grip",
         rating: 2,
         prefix: "Balanced",
-        stats: { attack: 1, defense: 1, speed: 1 },
+        stats: { attack: 1, speed: 1 },
     },
     {
         id: "g_h3",
@@ -84,7 +84,7 @@ const GRIP_POOL = [
         name: "Champion's Grip",
         rating: 3,
         prefix: "Steadfast",
-        stats: { attack: 2, defense: 1, speed: 1 },
+        stats: { attack: 2, speed: 1 },
     },
     {
         id: "g_h4",
@@ -143,7 +143,7 @@ const POMMEL_POOL = [
         name: "Soldier's Pommel",
         rating: 1,
         prefix: null,
-        stats: { defense: 1 },
+        stats: { attack: 1 },
     },
     {
         id: "pm_h2",
@@ -151,7 +151,7 @@ const POMMEL_POOL = [
         name: "Fine Steel Pommel",
         rating: 2,
         prefix: null,
-        stats: { attack: 1, defense: 1 },
+        stats: { attack: 1 },
     },
     {
         id: "pm_h3",
@@ -159,7 +159,7 @@ const POMMEL_POOL = [
         name: "Knight's Pommel",
         rating: 3,
         prefix: null,
-        stats: { attack: 1, defense: 2 },
+        stats: { attack: 2 },
     },
     {
         id: "pm_h4",
@@ -607,21 +607,21 @@ const CHEST_PLATES = [
         origin: "Human",
         name: "Soldier's Breastplate",
         rating: 1,
-        stats: { defense: 9, attack: 1 },
+        stats: { defense: 9 },
     },
     {
         id: "cp_h2",
         origin: "Human",
         name: "Knight's Cuirass",
         rating: 2,
-        stats: { defense: 11, attack: 1, speed: 1 },
+        stats: { defense: 11, speed: 1 },
     },
     {
         id: "cp_h3",
         origin: "Human",
         name: "Champion's Plate",
         rating: 3,
-        stats: { defense: 14, attack: 2, speed: 1 },
+        stats: { defense: 14, speed: 1 },
     },
     {
         id: "cp_h4",
@@ -678,7 +678,7 @@ const PAULDRONS = [
         name: "Iron Pauldrons",
         rating: 1,
         prefix: "Reliable",
-        stats: { defense: 4, attack: 1 },
+        stats: { defense: 4 },
     },
     {
         id: "pa_h2",
@@ -686,7 +686,7 @@ const PAULDRONS = [
         name: "Soldier's Pauldrons",
         rating: 2,
         prefix: "Steadfast",
-        stats: { defense: 5, attack: 1, speed: 1 },
+        stats: { defense: 5, speed: 1 },
     },
     {
         id: "pa_h3",
@@ -694,7 +694,7 @@ const PAULDRONS = [
         name: "Knight's Pauldrons",
         rating: 3,
         prefix: "Balanced",
-        stats: { defense: 6, attack: 1, speed: 1 },
+        stats: { defense: 6, speed: 1 },
     },
     {
         id: "pa_h4",
@@ -777,7 +777,7 @@ const ARMOR_LININGS = [
         name: "Tempered Padding",
         rating: 4,
         prefix: null,
-        stats: { defense: 5, attack: 1, speed: 1 },
+        stats: { defense: 5, speed: 1 },
     },
     {
         id: "al_h5",
@@ -785,7 +785,7 @@ const ARMOR_LININGS = [
         name: "Masterwork Lining",
         rating: 5,
         prefix: null,
-        stats: { defense: 6, attack: 1, speed: 1 },
+        stats: { defense: 6, speed: 1 },
     },
 ];
 
@@ -844,7 +844,7 @@ const ARMOR_CLASPS = [
         name: "Knight's Buckle",
         rating: 3,
         prefix: null,
-        stats: { defense: 3, attack: 1 },
+        stats: { defense: 3 },
     },
     {
         id: "ac_h4",
@@ -852,7 +852,7 @@ const ARMOR_CLASPS = [
         name: "Champion's Clasp",
         rating: 4,
         prefix: null,
-        stats: { defense: 4, attack: 1 },
+        stats: { defense: 4 },
     },
     {
         id: "ac_h5",
@@ -860,7 +860,7 @@ const ARMOR_CLASPS = [
         name: "Grandmaster's Fastening",
         rating: 5,
         prefix: null,
-        stats: { defense: 5, attack: 1, speed: 1 },
+        stats: { defense: 5, speed: 1 },
     },
 ];
 
@@ -898,21 +898,21 @@ const HELM_SHELLS = [
         origin: "Human",
         name: "Iron Helm",
         rating: 1,
-        stats: { defense: 5, attack: 1 },
+        stats: { defense: 5 },
     },
     {
         id: "hs_h2",
         origin: "Human",
         name: "Soldier's Helm",
         rating: 2,
-        stats: { defense: 7, attack: 1, speed: 1 },
+        stats: { defense: 7, speed: 1 },
     },
     {
         id: "hs_h3",
         origin: "Human",
         name: "Knight's Helm",
         rating: 3,
-        stats: { defense: 9, attack: 1, speed: 1 },
+        stats: { defense: 9, speed: 1 },
     },
     {
         id: "hs_h4",
@@ -970,7 +970,7 @@ const HELM_VISORS = [
         name: "Soldier's Visor",
         rating: 2,
         prefix: "Steadfast",
-        stats: { defense: 4, attack: 1 },
+        stats: { defense: 4 },
     },
     {
         id: "hv_h3",
@@ -978,7 +978,7 @@ const HELM_VISORS = [
         name: "Knight's Faceplate",
         rating: 3,
         prefix: "Resolute",
-        stats: { defense: 5, attack: 1 },
+        stats: { defense: 5 },
     },
     {
         id: "hv_h4",
@@ -986,7 +986,7 @@ const HELM_VISORS = [
         name: "Champion's Visor",
         rating: 4,
         prefix: "Dauntless",
-        stats: { defense: 6, attack: 2 },
+        stats: { defense: 6 },
     },
     {
         id: "hv_h5",
@@ -994,7 +994,7 @@ const HELM_VISORS = [
         name: "Grandmaster's Faceplate",
         rating: 5,
         prefix: "Indomitable",
-        stats: { defense: 7, attack: 2, speed: 1 },
+        stats: { defense: 7, speed: 1 },
     },
 ];
 
@@ -1061,7 +1061,7 @@ const HELM_STRAPS = [
         name: "Champion's Strap",
         rating: 4,
         prefix: null,
-        stats: { defense: 3, attack: 1, speed: 1 },
+        stats: { defense: 3, speed: 1 },
     },
     {
         id: "hst_h5",
@@ -1069,7 +1069,7 @@ const HELM_STRAPS = [
         name: "Masterwork Strap",
         rating: 5,
         prefix: null,
-        stats: { defense: 4, attack: 1, speed: 1 },
+        stats: { defense: 4, speed: 1 },
     },
 ];
 
@@ -1114,14 +1114,14 @@ const LEG_PLATES = [
         origin: "Human",
         name: "Soldier's Greaves",
         rating: 2,
-        stats: { defense: 10, attack: 1, speed: 1 },
+        stats: { defense: 10, speed: 1 },
     },
     {
         id: "lp_h3",
         origin: "Human",
         name: "Knight's Greaves",
         rating: 3,
-        stats: { defense: 12, attack: 1, speed: 2 },
+        stats: { defense: 12, speed: 2 },
     },
     {
         id: "lp_h4",
@@ -1202,7 +1202,7 @@ const KNEE_PLATES = [
         name: "Champion's Poleyn",
         rating: 4,
         prefix: "Stalwart",
-        stats: { defense: 6, attack: 2, speed: 2 },
+        stats: { defense: 6, speed: 2 },
     },
     {
         id: "kp_h5",
@@ -1210,7 +1210,7 @@ const KNEE_PLATES = [
         name: "Grandmaster's Poleyn",
         rating: 5,
         prefix: "Indomitable",
-        stats: { defense: 7, attack: 2, speed: 3 },
+        stats: { defense: 7, speed: 3 },
     },
 ];
 
@@ -1269,7 +1269,7 @@ const LEG_STRAPS = [
         name: "Knight's Straps",
         rating: 3,
         prefix: null,
-        stats: { defense: 3, attack: 1, speed: 1 },
+        stats: { defense: 3, speed: 1 },
     },
     {
         id: "ls2_h4",
@@ -1277,7 +1277,7 @@ const LEG_STRAPS = [
         name: "Champion's Straps",
         rating: 4,
         prefix: null,
-        stats: { defense: 4, attack: 1, speed: 2 },
+        stats: { defense: 4, speed: 2 },
     },
     {
         id: "ls2_h5",
@@ -1285,7 +1285,7 @@ const LEG_STRAPS = [
         name: "Masterwork Straps",
         rating: 5,
         prefix: null,
-        stats: { defense: 5, attack: 2, speed: 2 },
+        stats: { defense: 5, speed: 2 },
     },
 ];
 
