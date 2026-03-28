@@ -401,7 +401,7 @@ const DAGGER_CROSSGUARDS = [
         name: "Leaf Quillon",
         rating: 3,
         prefix: "Keen",
-        stats: { speed: 3 },
+        stats: { speed: 2 },
     },
     {
         id: "dc_e2",
@@ -409,7 +409,7 @@ const DAGGER_CROSSGUARDS = [
         name: "Moonsilver Quillon",
         rating: 8,
         prefix: "Sharp",
-        stats: { speed: 5 },
+        stats: { speed: 3 },
     },
     {
         id: "dc_e3",
@@ -417,7 +417,7 @@ const DAGGER_CROSSGUARDS = [
         name: "Starforged Quillon",
         rating: 13,
         prefix: "Piercing",
-        stats: { speed: 7, magic: 2 },
+        stats: { speed: 4, magic: 1 },
     },
     {
         id: "dc_e4",
@@ -425,7 +425,7 @@ const DAGGER_CROSSGUARDS = [
         name: "Dawnedge Quillon",
         rating: 18,
         prefix: "Arcane",
-        stats: { speed: 9, magic: 4 },
+        stats: { speed: 5, magic: 2 },
     },
     {
         id: "dc_e5",
@@ -433,7 +433,7 @@ const DAGGER_CROSSGUARDS = [
         name: "Celestial Quillon",
         rating: 23,
         prefix: "Ethereal",
-        stats: { speed: 11, magic: 6 },
+        stats: { speed: 6, magic: 3 },
     },
     // Human
     {
@@ -785,14 +785,14 @@ const CHEST_PLATES = [
         origin: "Human",
         name: "Grandmaster's Cuirass",
         rating: 18,
-        stats: { defense: 36, maxHp: 34, attack: 4 },
+        stats: { defense: 36, maxHp: 34, attack: 1 },
     },
     {
         id: "cp_h5",
         origin: "Human",
         name: "Grand Champion's Plate",
         rating: 23,
-        stats: { defense: 44, maxHp: 42, attack: 7 },
+        stats: { defense: 44, maxHp: 42, attack: 2 },
     },
 ];
 
@@ -873,7 +873,7 @@ const PAULDRONS = [
         name: "Champion's Pauldrons",
         rating: 18,
         prefix: "Noble",
-        stats: { defense: 14, maxHp: 13, attack: 3 },
+        stats: { defense: 14, maxHp: 13, attack: 1 },
     },
     {
         id: "pa_h5",
@@ -881,7 +881,7 @@ const PAULDRONS = [
         name: "Grandmaster's Shoulders",
         rating: 23,
         prefix: "Stalwart",
-        stats: { defense: 17, maxHp: 16, attack: 5 },
+        stats: { defense: 17, maxHp: 16, attack: 2 },
     },
 ];
 
@@ -1131,14 +1131,14 @@ const HELM_SHELLS = [
         origin: "Human",
         name: "Champion's Helm",
         rating: 18,
-        stats: { defense: 23, maxHp: 21, attack: 3 },
+        stats: { defense: 23, maxHp: 21, attack: 1 },
     },
     {
         id: "hs_h5",
         origin: "Human",
         name: "Grandmaster's Helm",
         rating: 23,
-        stats: { defense: 28, maxHp: 26, attack: 5 },
+        stats: { defense: 28, maxHp: 26, attack: 2 },
     },
 ];
 
@@ -1388,14 +1388,14 @@ const LEG_PLATES = [
         origin: "Human",
         name: "Champion's Greaves",
         rating: 18,
-        stats: { defense: 31, maxHp: 26, attack: 3 },
+        stats: { defense: 31, maxHp: 26, attack: 1 },
     },
     {
         id: "lp_h5",
         origin: "Human",
         name: "Grand Champion's Greaves",
         rating: 23,
-        stats: { defense: 38, maxHp: 32, attack: 5 },
+        stats: { defense: 38, maxHp: 32, attack: 2 },
     },
 ];
 
