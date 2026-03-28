@@ -49,6 +49,7 @@ function computeStats(character) {
             if (stats.defense) defense += stats.defense;
             if (stats.speed)   speed   += stats.speed;
             if (stats.magic)   magic   += stats.magic;
+            if (stats.maxHp)   maxHp   += stats.maxHp;
         }
     }
 
