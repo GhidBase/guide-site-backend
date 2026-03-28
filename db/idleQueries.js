@@ -2,7 +2,7 @@ import { prisma } from "../lib/prisma.js";
 import { generateWeapon } from "../utils/weaponGenerator.js";
 
 const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // 8 hours
-const HP_REGEN_PER_SECOND = 10;
+const HP_REGEN_PER_SECOND = 10; // used for the recovery timer display on the frontend
 
 // Item types that can drop
 const DROP_TYPES = ["sword", "longsword", "greatsword", "dagger", "chest", "helm", "legs"];
@@ -297,10 +297,10 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
 
     const stats = computeStats(character);
 
-    // If player is dead, regen HP instead of fighting
+    // If player is dead, regen HP instead of fighting — always restore fully in one tick
+    // to avoid the server/frontend disagreeing on alive state across multiple ticks
     if (character.currentHp <= 0) {
-        const regenHp = Math.min(stats.maxHp, Math.round(HP_REGEN_PER_SECOND * durationSeconds));
-        const newHp = character.currentHp + regenHp;
+        const newHp = stats.maxHp;
         await prisma.idleCharacter.update({
             where: { id: character.id },
             data: { currentHp: newHp, lastOnline: new Date() },
