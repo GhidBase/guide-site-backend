@@ -404,6 +404,7 @@ model IdleCharacter {
   baseAttack  Int    @default(5)
   baseDefense Int    @default(0)
   baseMaxHp   Int    @default(100)
+  currentHp   Int    @default(100)
 
   currentZone     String    @default("forest")
   totalKills      Int       @default(0)
@@ -448,10 +449,11 @@ model IdleEnemy {
   name      String @unique
   zone      String
   level     Int    @default(1)
-  hp        Int
-  attack    Int
-  defense   Int
-  xpReward  Int
+  hp          Int
+  attack      Int
+  defense     Int
+  attackSpeed Float  @default(1.0)
+  xpReward    Int
 
   drops       IdleEnemyDrop[]
   characters  IdleCharacter[]

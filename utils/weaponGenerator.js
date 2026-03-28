@@ -1415,11 +1415,15 @@ function mergeStats(...parts) {
 
 const LOG_SCALING_FACTOR = 2;
 
+// Stats that represent fixed weapon characteristics, not power that scales with level
+const UNSCALED_STATS = new Set(["speed"]);
+
 function scaleStats(stats, level) {
     const multiplier = 1 + Math.log(level + 1) * LOG_SCALING_FACTOR;
     const scaled = {};
     for (const [key, val] of Object.entries(stats)) {
-        // Negative stats (e.g. speed penalty) scale toward zero, not further negative
+        if (UNSCALED_STATS.has(key)) { scaled[key] = val; continue; }
+        // Negative stats (e.g. penalties) scale toward zero, not further negative
         if (val < 0) scaled[key] = Math.ceil(val / multiplier);
         else scaled[key] = Math.round(val * multiplier);
     }

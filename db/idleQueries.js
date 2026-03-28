@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma.js";
 import { generateWeapon } from "../utils/weaponGenerator.js";
 
 const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // 8 hours
+const HP_REGEN_PER_SECOND = 10;
 
 // Item types that can drop
 const DROP_TYPES = ["sword", "longsword", "greatsword", "dagger", "chest", "helm", "legs"];
@@ -38,21 +39,58 @@ function computeStats(character) {
     let attack = character.baseAttack;
     let defense = character.baseDefense;
     let maxHp = character.baseMaxHp;
+    let speed = 0;
+    let magic = 0;
 
     for (const weapon of character.weapons) {
         if (weapon.equipped) {
             const stats = weapon.stats;
-            if (stats.attack) attack += stats.attack;
+            if (stats.attack)  attack  += stats.attack;
             if (stats.defense) defense += stats.defense;
+            if (stats.speed)   speed   += stats.speed;
+            if (stats.magic)   magic   += stats.magic;
         }
     }
 
-    return { attack, defense, maxHp };
+    return { attack, defense, maxHp, speed, magic };
+}
+
+// Simulate N seconds of combat. Returns kills achieved and HP remaining.
+// Player dies if HP hits 0 mid-fight; kills are clamped accordingly.
+function simulateCombat(stats, enemy, seconds, startingHp) {
+    const { attack, defense, maxHp, speed, magic } = stats;
+
+    const attacksPerSec = 0.5 + speed / 50;
+    const dmgPerHit = Math.max(1, (attack + magic) - enemy.defense);
+    const hitsToKillEnemy = Math.max(1, Math.ceil(enemy.hp / dmgPerHit));
+    const timeToKillEnemy = hitsToKillEnemy / attacksPerSec;
+
+    const enemyAttackSpeed = enemy.attackSpeed ?? 1.0;
+    const enemyDmgPerHit = Math.max(1, enemy.attack - defense);
+    const hpLostPerKill = enemyDmgPerHit * enemyAttackSpeed * timeToKillEnemy;
+
+    let hp = startingHp;
+    let kills = 0;
+    let timeLeft = seconds;
+
+    while (timeLeft >= timeToKillEnemy && hp > 0) {
+        if (hp <= hpLostPerKill) {
+            // Player dies during this kill attempt
+            hp = 0;
+            break;
+        }
+        hp -= hpLostPerKill;
+        kills++;
+        timeLeft -= timeToKillEnemy;
+    }
+
+    return { kills, hpRemaining: Math.max(0, hp) };
 }
 
 function formatCharacter(character) {
     const stats = computeStats(character);
     const xpNeeded = xpForLevel(character.level + 1);
+    const currentHp = Math.min(character.currentHp, stats.maxHp);
 
     const weaponItems = character.weapons.map((w) => ({
         id: w.id,
@@ -85,6 +123,9 @@ function formatCharacter(character) {
         attack: stats.attack,
         defense: stats.defense,
         maxHp: stats.maxHp,
+        speed: stats.speed,
+        magic: stats.magic,
+        currentHp,
         inventory: weaponItems,
         createdAt: character.createdAt,
         updatedAt: character.updatedAt,
@@ -142,9 +183,17 @@ export async function getOrCreateCharacter(userId) {
 
         if (secondsOffline >= 1) {
             const stats = computeStats(character);
-            const damagePerHit = Math.max(1, stats.attack - character.currentEnemy.defense);
-            const hitsToKill = Math.ceil(character.currentEnemy.hp / damagePerHit);
-            const kills = Math.floor(secondsOffline / hitsToKill);
+            let offlineHp = character.currentHp;
+
+            // If player was dead, they regen HP offline before fighting
+            let fightSeconds = secondsOffline;
+            if (offlineHp <= 0) {
+                const regenSeconds = Math.min(secondsOffline, stats.maxHp / HP_REGEN_PER_SECOND);
+                offlineHp = Math.min(stats.maxHp, HP_REGEN_PER_SECOND * regenSeconds);
+                fightSeconds = secondsOffline - regenSeconds;
+            }
+
+            const { kills, hpRemaining } = simulateCombat(stats, character.currentEnemy, fightSeconds, offlineHp);
 
             if (kills > 0) {
                 const xpGained = kills * character.currentEnemy.xpReward;
@@ -168,6 +217,7 @@ export async function getOrCreateCharacter(userId) {
                             level: newLevel,
                             baseAttack: { increment: levelUps },
                             totalKills: { increment: kills },
+                            currentHp: Math.round(hpRemaining),
                             lastOnline: new Date(),
                         },
                     }),
@@ -235,15 +285,28 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
     if (!enemy) throw new Error("Enemy not found");
     if (enemy.zone !== character.currentZone) throw new Error("Enemy not in current zone");
 
-    // Server-side kill validation
     const stats = computeStats(character);
-    const damagePerHit = Math.max(1, stats.attack - enemy.defense);
-    const hitsToKill = Math.ceil(enemy.hp / damagePerHit);
-    const maxKills = Math.ceil((durationSeconds / hitsToKill) * 1.1);
-    const validatedKills = Math.min(kills, Math.max(0, maxKills));
+
+    // If player is dead, regen HP instead of fighting
+    if (character.currentHp <= 0) {
+        const regenHp = Math.min(stats.maxHp, Math.round(HP_REGEN_PER_SECOND * durationSeconds));
+        const newHp = character.currentHp + regenHp;
+        await prisma.idleCharacter.update({
+            where: { id: character.id },
+            data: { currentHp: newHp, lastOnline: new Date() },
+        });
+        const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
+        return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0 };
+    }
+
+    // Simulate combat with HP drain; clamp kills to what HP allows
+    const { kills: maxSimKills, hpRemaining } = simulateCombat(stats, enemy, durationSeconds, character.currentHp);
+    const validatedKills = Math.min(kills, Math.ceil(maxSimKills * 1.1));
 
     if (validatedKills === 0) {
-        return { character: formatCharacter(character), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0 };
+        await prisma.idleCharacter.update({ where: { id: character.id }, data: { currentHp: Math.round(hpRemaining), lastOnline: new Date() } });
+        const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
+        return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0 };
     }
 
     const xpGained = validatedKills * enemy.xpReward;
@@ -267,6 +330,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
                 level: newLevel,
                 baseAttack: { increment: levelUps },
                 totalKills: { increment: validatedKills },
+                currentHp: Math.round(hpRemaining),
                 lastOnline: new Date(),
                 currentEnemyId: enemyId,
             },
@@ -305,7 +369,40 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
         levelUps,
         xpGained,
         killsProcessed: validatedKills,
+        died: hpRemaining <= 0,
     };
+}
+
+export async function resetCharacter(userId) {
+    const character = await prisma.idleCharacter.findUnique({ where: { userId } });
+    if (!character) throw new Error("Character not found");
+
+    await prisma.idleCharacter.update({
+        where: { id: character.id },
+        data: {
+            level: 1,
+            xp: 0,
+            baseAttack: 5,
+            baseDefense: 0,
+            baseMaxHp: 100,
+            currentHp: 100,
+            totalKills: 0,
+        },
+    });
+
+    const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
+    return formatCharacter(updated);
+}
+
+export async function reviveCharacter(userId) {
+    const character = await prisma.idleCharacter.findUnique({ where: { userId }, include: characterInclude });
+    if (!character) throw new Error("Character not found");
+
+    const stats = computeStats(character);
+    await prisma.idleCharacter.update({ where: { id: character.id }, data: { currentHp: stats.maxHp } });
+
+    const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
+    return formatCharacter(updated);
 }
 
 export async function equipItem(userId, inventoryItemId, { equipped, source }) {

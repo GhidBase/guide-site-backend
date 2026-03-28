@@ -10,6 +10,8 @@ router.post("/character/equip/:inventoryItemId", requireAuth, idleController.equ
 router.delete("/character/item/:itemId", requireAuth, idleController.discard);
 router.delete("/character/items", requireAuth, idleController.discardMany);
 router.post("/character/zone", requireAuth, idleController.changeZone);
+router.post("/character/reset", requireAuth, idleController.reset);
+router.post("/character/revive", requireAuth, idleController.revive);
 router.get("/enemies", idleController.getEnemies);
 router.get("/zones", idleController.getZones);
 

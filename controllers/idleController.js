@@ -120,4 +120,22 @@ async function discard(req, res) {
     }
 }
 
-export default { getCharacter, tick, equip, discard, discardMany, changeZone, getEnemies, getZones };
+async function reset(req, res) {
+    try {
+        const character = await db.resetCharacter(req.user.id);
+        res.json(character);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
+async function revive(req, res) {
+    try {
+        const character = await db.reviveCharacter(req.user.id);
+        res.json(character);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
+export default { getCharacter, tick, equip, discard, discardMany, changeZone, getEnemies, getZones, reset, revive };
