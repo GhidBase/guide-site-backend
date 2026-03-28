@@ -61,7 +61,7 @@ const GRIP_POOL = [
         name: "Moonweave Grip",
         rating: 8,
         prefix: "Nimble",
-        stats: { speed: 4 },
+        stats: { speed: 3 },
     },
     {
         id: "g_e3",
@@ -69,7 +69,7 @@ const GRIP_POOL = [
         name: "Starthread Grip",
         rating: 13,
         prefix: "Ethereal",
-        stats: { speed: 6, magic: 2 },
+        stats: { speed: 4, magic: 1 },
     },
     {
         id: "g_e4",
@@ -77,7 +77,7 @@ const GRIP_POOL = [
         name: "Dreamwoven Grip",
         rating: 18,
         prefix: "Spectral",
-        stats: { speed: 8, magic: 4 },
+        stats: { speed: 5, magic: 2 },
     },
     {
         id: "g_e5",
@@ -85,7 +85,7 @@ const GRIP_POOL = [
         name: "Celestial Grasp",
         rating: 23,
         prefix: "Radiant",
-        stats: { speed: 10, magic: 6 },
+        stats: { speed: 6, magic: 3 },
     },
     // Human
     {
@@ -94,7 +94,7 @@ const GRIP_POOL = [
         name: "Soldier's Grip",
         rating: 3,
         prefix: "Reliable",
-        stats: { attack: 2 },
+        stats: { attack: 1 },
     },
     {
         id: "g_h2",
@@ -102,7 +102,7 @@ const GRIP_POOL = [
         name: "Knight's Grip",
         rating: 8,
         prefix: "Balanced",
-        stats: { attack: 4 },
+        stats: { attack: 1 },
     },
     {
         id: "g_h3",
@@ -110,7 +110,7 @@ const GRIP_POOL = [
         name: "Champion's Grip",
         rating: 13,
         prefix: "Steadfast",
-        stats: { attack: 6 },
+        stats: { attack: 2 },
     },
     {
         id: "g_h4",
@@ -118,7 +118,7 @@ const GRIP_POOL = [
         name: "Tempered Grip",
         rating: 18,
         prefix: "True",
-        stats: { attack: 8, defense: 3 },
+        stats: { attack: 2, defense: 3 },
     },
     {
         id: "g_h5",
@@ -126,7 +126,7 @@ const GRIP_POOL = [
         name: "Grandmaster's Grip",
         rating: 23,
         prefix: "Versatile",
-        stats: { attack: 10, defense: 5 },
+        stats: { attack: 3, defense: 5 },
     },
 ];
 
@@ -142,7 +142,7 @@ const POMMEL_POOL = [
         name: "Moonstone Cap",
         rating: 3,
         prefix: null,
-        stats: { magic: 2, speed: 1 },
+        stats: { magic: 1, speed: 1 },
     },
     {
         id: "pm_e2",
@@ -150,7 +150,7 @@ const POMMEL_POOL = [
         name: "Starcrystal Pommel",
         rating: 8,
         prefix: null,
-        stats: { magic: 4, speed: 2 },
+        stats: { magic: 2, speed: 1 },
     },
     {
         id: "pm_e3",
@@ -158,7 +158,7 @@ const POMMEL_POOL = [
         name: "Celestial Orb",
         rating: 13,
         prefix: null,
-        stats: { magic: 7, speed: 3 },
+        stats: { magic: 3, speed: 2 },
     },
     {
         id: "pm_e4",
@@ -166,7 +166,7 @@ const POMMEL_POOL = [
         name: "Aurora Core",
         rating: 18,
         prefix: null,
-        stats: { magic: 10, speed: 4 },
+        stats: { magic: 4, speed: 2 },
     },
     {
         id: "pm_e5",
@@ -174,7 +174,7 @@ const POMMEL_POOL = [
         name: "Astral Apex",
         rating: 23,
         prefix: null,
-        stats: { magic: 13, speed: 5, attack: 2 },
+        stats: { magic: 5, speed: 3, attack: 1 },
     },
     // Human
     {
@@ -183,7 +183,7 @@ const POMMEL_POOL = [
         name: "Soldier's Pommel",
         rating: 3,
         prefix: null,
-        stats: { attack: 2 },
+        stats: { attack: 1 },
     },
     {
         id: "pm_h2",
@@ -191,7 +191,7 @@ const POMMEL_POOL = [
         name: "Fine Steel Pommel",
         rating: 8,
         prefix: null,
-        stats: { attack: 4 },
+        stats: { attack: 1 },
     },
     {
         id: "pm_h3",
@@ -199,7 +199,7 @@ const POMMEL_POOL = [
         name: "Knight's Pommel",
         rating: 13,
         prefix: null,
-        stats: { attack: 6 },
+        stats: { attack: 2 },
     },
     {
         id: "pm_h4",
@@ -207,7 +207,7 @@ const POMMEL_POOL = [
         name: "Champion's End",
         rating: 18,
         prefix: null,
-        stats: { attack: 8, defense: 3 },
+        stats: { attack: 2, defense: 3 },
     },
     {
         id: "pm_h5",
@@ -215,7 +215,7 @@ const POMMEL_POOL = [
         name: "Grandmaster's Pommel",
         rating: 23,
         prefix: null,
-        stats: { attack: 10, defense: 5 },
+        stats: { attack: 3, defense: 5 },
     },
 ];
 
@@ -247,7 +247,7 @@ const GUARD_POOL = [
         name: "Starforged Guard",
         rating: 13,
         prefix: "Radiant",
-        stats: { defense: 7, speed: 4, magic: 2 },
+        stats: { defense: 7, speed: 4, magic: 1 },
     },
     {
         id: "gd_e4",
@@ -255,7 +255,7 @@ const GUARD_POOL = [
         name: "Solarbind Guard",
         rating: 18,
         prefix: "Luminous",
-        stats: { defense: 9, speed: 5, magic: 4 },
+        stats: { defense: 9, speed: 5, magic: 2 },
     },
     {
         id: "gd_e5",
@@ -263,7 +263,7 @@ const GUARD_POOL = [
         name: "Celestial Ward",
         rating: 23,
         prefix: "Resplendent",
-        stats: { defense: 11, speed: 6, magic: 6 },
+        stats: { defense: 11, speed: 6, magic: 3 },
     },
     // Human
     {
@@ -288,7 +288,7 @@ const GUARD_POOL = [
         name: "Knight's Guard",
         rating: 13,
         prefix: "Steadfast",
-        stats: { defense: 8, attack: 2 },
+        stats: { defense: 8, attack: 1 },
     },
     {
         id: "gd_h4",
@@ -296,7 +296,7 @@ const GUARD_POOL = [
         name: "Refined Guard",
         rating: 18,
         prefix: "True",
-        stats: { defense: 10, attack: 4 },
+        stats: { defense: 10, attack: 1 },
     },
     {
         id: "gd_h5",
@@ -304,7 +304,7 @@ const GUARD_POOL = [
         name: "Grandmaster's Guard",
         rating: 23,
         prefix: "Indomitable",
-        stats: { defense: 12, attack: 6 },
+        stats: { defense: 12, attack: 2 },
     },
 ];
 
@@ -321,35 +321,35 @@ const DAGGER_BLADES = [
         origin: "Elven",
         name: "Elven Fang",
         rating: 3,
-        stats: { attack: 6, speed: 3 },
+        stats: { attack: 2, speed: 2 },
     },
     {
         id: "db_e2",
         origin: "Elven",
         name: "Moonpiercer",
         rating: 8,
-        stats: { attack: 12, speed: 5 },
+        stats: { attack: 3, speed: 3 },
     },
     {
         id: "db_e3",
         origin: "Elven",
         name: "Silverfang",
         rating: 13,
-        stats: { attack: 18, speed: 7, magic: 3 },
+        stats: { attack: 5, speed: 4, magic: 1 },
     },
     {
         id: "db_e4",
         origin: "Elven",
         name: "Dawnwhisper",
         rating: 18,
-        stats: { attack: 24, speed: 9, magic: 5 },
+        stats: { attack: 7, speed: 5, magic: 2 },
     },
     {
         id: "db_e5",
         origin: "Elven",
         name: "Celestial Fang",
         rating: 23,
-        stats: { attack: 30, speed: 11, magic: 7 },
+        stats: { attack: 9, speed: 6, magic: 3 },
     },
     // Human
     {
@@ -357,35 +357,35 @@ const DAGGER_BLADES = [
         origin: "Human",
         name: "Soldier's Knife",
         rating: 3,
-        stats: { attack: 7 },
+        stats: { attack: 2 },
     },
     {
         id: "db_h2",
         origin: "Human",
         name: "Tempered Dagger",
         rating: 8,
-        stats: { attack: 14 },
+        stats: { attack: 4 },
     },
     {
         id: "db_h3",
         origin: "Human",
         name: "Knight's Dirk",
         rating: 13,
-        stats: { attack: 20 },
+        stats: { attack: 6 },
     },
     {
         id: "db_h4",
         origin: "Human",
         name: "Fine Steel Dagger",
         rating: 18,
-        stats: { attack: 26, speed: 4, defense: 4 },
+        stats: { attack: 8, speed: 2, defense: 4 },
     },
     {
         id: "db_h5",
         origin: "Human",
         name: "Champion's Blade",
         rating: 23,
-        stats: { attack: 32, speed: 6, defense: 6 },
+        stats: { attack: 10, speed: 3, defense: 6 },
     },
 ];
 
@@ -489,35 +489,35 @@ const SWORD_BLADES = [
         origin: "Elven",
         name: "Moonblade",
         rating: 3,
-        stats: { attack: 8, speed: 2 },
+        stats: { attack: 3, speed: 2 },
     },
     {
         id: "sw_e2",
         origin: "Elven",
         name: "Starfang",
         rating: 8,
-        stats: { attack: 15, speed: 3 },
+        stats: { attack: 5, speed: 3 },
     },
     {
         id: "sw_e3",
         origin: "Elven",
         name: "Dawnedge",
         rating: 13,
-        stats: { attack: 22, speed: 4, magic: 4 },
+        stats: { attack: 7, speed: 3, magic: 2 },
     },
     {
         id: "sw_e4",
         origin: "Elven",
         name: "Celestial Blade",
         rating: 18,
-        stats: { attack: 29, speed: 5, magic: 7 },
+        stats: { attack: 9, speed: 4, magic: 3 },
     },
     {
         id: "sw_e5",
         origin: "Elven",
         name: "Aurora Edge",
         rating: 23,
-        stats: { attack: 36, speed: 6, magic: 10 },
+        stats: { attack: 11, speed: 4, magic: 4 },
     },
     // Human
     {
@@ -525,35 +525,35 @@ const SWORD_BLADES = [
         origin: "Human",
         name: "Soldier's Blade",
         rating: 3,
-        stats: { attack: 9, defense: 2 },
+        stats: { attack: 3, defense: 2 },
     },
     {
         id: "sw_h2",
         origin: "Human",
         name: "Tempered Blade",
         rating: 8,
-        stats: { attack: 16, defense: 4 },
+        stats: { attack: 5, defense: 4 },
     },
     {
         id: "sw_h3",
         origin: "Human",
         name: "Knight's Blade",
         rating: 13,
-        stats: { attack: 22, defense: 6 },
+        stats: { attack: 7, defense: 6 },
     },
     {
         id: "sw_h4",
         origin: "Human",
         name: "Fine Steel Sword",
         rating: 18,
-        stats: { attack: 28, defense: 8, speed: 3 },
+        stats: { attack: 9, defense: 8, speed: 2 },
     },
     {
         id: "sw_h5",
         origin: "Human",
         name: "Champion's Edge",
         rating: 23,
-        stats: { attack: 34, defense: 10, speed: 5 },
+        stats: { attack: 11, defense: 10, speed: 2 },
     },
 ];
 
@@ -568,35 +568,35 @@ const LONGSWORD_BLADES = [
         origin: "Elven",
         name: "Whisper",
         rating: 3,
-        stats: { attack: 10, speed: 2 },
+        stats: { attack: 4, speed: 2 },
     },
     {
         id: "ls_e2",
         origin: "Elven",
         name: "Moonshard",
         rating: 8,
-        stats: { attack: 18, speed: 3 },
+        stats: { attack: 6, speed: 3 },
     },
     {
         id: "ls_e3",
         origin: "Elven",
         name: "Starweave",
         rating: 13,
-        stats: { attack: 26, speed: 4, magic: 4 },
+        stats: { attack: 9, speed: 3, magic: 2 },
     },
     {
         id: "ls_e4",
         origin: "Elven",
         name: "Celestial Edge",
         rating: 18,
-        stats: { attack: 34, speed: 5, magic: 8 },
+        stats: { attack: 11, speed: 4, magic: 4 },
     },
     {
         id: "ls_e5",
         origin: "Elven",
         name: "Dawnreaver",
         rating: 23,
-        stats: { attack: 42, speed: 6, magic: 12 },
+        stats: { attack: 14, speed: 4, magic: 5 },
     },
     // Human
     {
@@ -604,35 +604,35 @@ const LONGSWORD_BLADES = [
         origin: "Human",
         name: "Soldier's Longsword",
         rating: 3,
-        stats: { attack: 11, defense: 3 },
+        stats: { attack: 4, defense: 3 },
     },
     {
         id: "ls_h2",
         origin: "Human",
         name: "Tempered Longsword",
         rating: 8,
-        stats: { attack: 19, defense: 5 },
+        stats: { attack: 6, defense: 5 },
     },
     {
         id: "ls_h3",
         origin: "Human",
         name: "Knight's Blade",
         rating: 13,
-        stats: { attack: 27, defense: 7 },
+        stats: { attack: 9, defense: 7 },
     },
     {
         id: "ls_h4",
         origin: "Human",
         name: "Fine Steel Longsword",
         rating: 18,
-        stats: { attack: 35, defense: 9, speed: 3 },
+        stats: { attack: 11, defense: 9, speed: 2 },
     },
     {
         id: "ls_h5",
         origin: "Human",
         name: "Champion's Longsword",
         rating: 23,
-        stats: { attack: 43, defense: 11, speed: 5 },
+        stats: { attack: 14, defense: 11, speed: 2 },
     },
 ];
 
@@ -647,35 +647,35 @@ const GREATSWORD_BLADES = [
         origin: "Elven",
         name: "Moonglaive",
         rating: 3,
-        stats: { attack: 14, speed: 2 },
+        stats: { attack: 5, speed: 1 },
     },
     {
         id: "gs_e2",
         origin: "Elven",
         name: "Starblade",
         rating: 8,
-        stats: { attack: 24, speed: 3 },
+        stats: { attack: 8, speed: 2 },
     },
     {
         id: "gs_e3",
         origin: "Elven",
         name: "Sunsever",
         rating: 13,
-        stats: { attack: 34, speed: 3, magic: 5 },
+        stats: { attack: 11, speed: 2, magic: 2 },
     },
     {
         id: "gs_e4",
         origin: "Elven",
         name: "Celestial Reaper",
         rating: 18,
-        stats: { attack: 44, speed: 4, magic: 9 },
+        stats: { attack: 14, speed: 2, magic: 4 },
     },
     {
         id: "gs_e5",
         origin: "Elven",
         name: "Aurora Cleaver",
         rating: 23,
-        stats: { attack: 54, speed: 5, magic: 13 },
+        stats: { attack: 17, speed: 3, magic: 5 },
     },
     // Human
     {
@@ -683,35 +683,35 @@ const GREATSWORD_BLADES = [
         origin: "Human",
         name: "Soldier's Greatsword",
         rating: 3,
-        stats: { attack: 14, defense: 2 },
+        stats: { attack: 5, defense: 2 },
     },
     {
         id: "gs_h2",
         origin: "Human",
         name: "Tempered Greatsword",
         rating: 8,
-        stats: { attack: 24, defense: 4 },
+        stats: { attack: 8, defense: 4 },
     },
     {
         id: "gs_h3",
         origin: "Human",
         name: "Knight's Claymore",
         rating: 13,
-        stats: { attack: 34, defense: 6 },
+        stats: { attack: 11, defense: 6 },
     },
     {
         id: "gs_h4",
         origin: "Human",
         name: "Fine Steel Claymore",
         rating: 18,
-        stats: { attack: 44, defense: 8, speed: 2 },
+        stats: { attack: 14, defense: 8, speed: 1 },
     },
     {
         id: "gs_h5",
         origin: "Human",
         name: "Grandmaster's Blade",
         rating: 23,
-        stats: { attack: 54, defense: 10, speed: 4 },
+        stats: { attack: 17, defense: 10, speed: 2 },
     },
 ];
 
