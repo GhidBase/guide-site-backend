@@ -554,7 +554,7 @@ export async function getZones() {
     const result = await prisma.idleEnemy.findMany({
         select: { zone: true },
         distinct: ["zone"],
-        orderBy: { zone: "asc" },
+        orderBy: { level: "asc" },
     });
     return result.map((r) => r.zone);
 }
