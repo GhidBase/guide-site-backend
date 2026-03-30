@@ -302,6 +302,14 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
 
     const stats = computeStats(character);
 
+    // If the gap is large with zero kills, the browser tab was throttled in the background.
+    // Skip the tick entirely — don't touch lastOnline so the offline gains system sees the
+    // correct elapsed time when the frontend refreshes.
+    const THROTTLE_GAP_SECONDS = 30;
+    if (kills === 0 && durationSeconds > THROTTLE_GAP_SECONDS) {
+        return { character: formatCharacter(character), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, died: false };
+    }
+
     // If player is dead, regen HP instead of fighting — always restore fully in one tick
     // to avoid the server/frontend disagreeing on alive state across multiple ticks
     if (character.currentHp <= 0) {
