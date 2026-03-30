@@ -73,7 +73,7 @@ function calcCombatParams(stats, enemy) {
     return { attacksPerSec, dmgPerHit, hitsToKillEnemy, timeToKillEnemy, killsPerSec, enemyDmgPerHit, hpLostPerKill };
 }
 
-// Simulate N seconds of combat. Returns kills achieved and HP remaining.
+// Simulate N seconds of combat. Returns kills achieved, HP remaining, and seconds used.
 // Player dies if HP hits 0 mid-fight; kills are clamped accordingly.
 function simulateCombat(stats, enemy, seconds, startingHp) {
     const { timeToKillEnemy, hpLostPerKill } = calcCombatParams(stats, enemy);
@@ -84,7 +84,8 @@ function simulateCombat(stats, enemy, seconds, startingHp) {
 
     while (timeLeft >= timeToKillEnemy && hp > 0) {
         if (hp <= hpLostPerKill) {
-            // Player dies during this kill attempt
+            // Player dies partway through this kill — advance time proportionally
+            timeLeft -= (hp / hpLostPerKill) * timeToKillEnemy;
             hp = 0;
             break;
         }
@@ -97,9 +98,42 @@ function simulateCombat(stats, enemy, seconds, startingHp) {
     if (timeLeft > 0 && hp > 0) {
         const partialDamage = (timeLeft / timeToKillEnemy) * hpLostPerKill;
         hp = Math.max(0, hp - partialDamage);
+        timeLeft = 0;
     }
 
-    return { kills, hpRemaining: Math.max(0, hp) };
+    return { kills, hpRemaining: Math.max(0, hp), secondsUsed: seconds - timeLeft };
+}
+
+// Simulate offline time with full death/regen cycles.
+// Unlike simulateCombat (single pass), this loops: die → regen → fight again.
+function simulateOffline(stats, enemy, seconds, startingHp) {
+    let timeLeft = seconds;
+    let hp = startingHp;
+    let totalKills = 0;
+
+    // Handle starting dead
+    if (hp <= 0) {
+        const regenTime = Math.min(timeLeft, stats.maxHp / HP_REGEN_PER_SECOND);
+        hp = Math.min(stats.maxHp, HP_REGEN_PER_SECOND * regenTime);
+        timeLeft -= regenTime;
+    }
+
+    while (timeLeft > 0 && hp > 0) {
+        const { kills, hpRemaining, secondsUsed } = simulateCombat(stats, enemy, timeLeft, hp);
+        totalKills += kills;
+        hp = hpRemaining;
+        timeLeft -= secondsUsed;
+
+        if (hp > 0) break; // survived to end of available time
+
+        // Died — regen before fighting again
+        const regenTime = Math.min(timeLeft, stats.maxHp / HP_REGEN_PER_SECOND);
+        if (regenTime <= 0) break;
+        hp = Math.min(stats.maxHp, HP_REGEN_PER_SECOND * regenTime);
+        timeLeft -= regenTime;
+    }
+
+    return { kills: totalKills, hpRemaining: Math.max(0, hp) };
 }
 
 function formatCharacter(character) {
@@ -198,17 +232,10 @@ export async function getOrCreateCharacter(userId) {
 
         if (secondsOffline >= 1) {
             const stats = computeStats(character);
-            let offlineHp = character.currentHp;
 
-            // If player was dead, they regen HP offline before fighting
-            let fightSeconds = secondsOffline;
-            if (offlineHp <= 0) {
-                const regenSeconds = Math.min(secondsOffline, stats.maxHp / HP_REGEN_PER_SECOND);
-                offlineHp = Math.min(stats.maxHp, HP_REGEN_PER_SECOND * regenSeconds);
-                fightSeconds = secondsOffline - regenSeconds;
-            }
-
-            const { kills, hpRemaining } = simulateCombat(stats, character.currentEnemy, fightSeconds, offlineHp);
+            const { kills, hpRemaining } = simulateOffline(
+                stats, character.currentEnemy, secondsOffline, character.currentHp
+            );
 
             if (kills > 0) {
                 const xpGained = kills * character.currentEnemy.xpReward;
