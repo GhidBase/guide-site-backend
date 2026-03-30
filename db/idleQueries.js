@@ -224,7 +224,7 @@ export async function getOrCreateCharacter(userId) {
 
     // Calculate offline progress
     let offlineGains = null;
-    if (character.lastOnline && character.currentEnemy) {
+    if (character.lastOnline && character.currentEnemy && character.currentEnemy.zone === character.currentZone) {
         const secondsOffline = Math.min(
             (Date.now() - new Date(character.lastOnline).getTime()) / 1000,
             MAX_OFFLINE_SECONDS
@@ -650,7 +650,7 @@ export async function changeZone(userId, zone) {
 
     const updated = await prisma.idleCharacter.update({
         where: { userId },
-        data: { currentZone: zone },
+        data: { currentZone: zone, currentEnemyId: null },
         include: characterInclude,
     });
 
