@@ -56,22 +56,27 @@ function computeStats(character) {
     return { attack, defense, maxHp, speed, magic };
 }
 
-// Simulate N seconds of combat. Returns kills achieved and HP remaining.
-// Player dies if HP hits 0 mid-fight; kills are clamped accordingly.
-function simulateCombat(stats, enemy, seconds, startingHp) {
-    const { attack, defense, maxHp, speed, magic } = stats;
-
-    const attacksPerSec = 0.5 + speed / 50;
+// Shared combat parameter derivation — single source of truth for all combat math.
+function calcCombatParams(stats, enemy) {
+    const { attack, defense, speed, magic } = stats;
     const k = 50 * enemy.level;
+    const attacksPerSec = 0.5 + speed / 50;
     const playerReduction = enemy.defense / (enemy.defense + k);
     const dmgPerHit = Math.max(1, Math.round((attack + magic) * (1 - playerReduction)));
     const hitsToKillEnemy = Math.max(1, Math.ceil(enemy.hp / dmgPerHit));
     const timeToKillEnemy = hitsToKillEnemy / attacksPerSec;
-
+    const killsPerSec = attacksPerSec / hitsToKillEnemy;
     const enemyAttackSpeed = enemy.attackSpeed ?? 1.0;
     const enemyReduction = defense / (defense + k);
     const enemyDmgPerHit = Math.max(1, Math.round(enemy.attack * (1 - enemyReduction)));
     const hpLostPerKill = enemyDmgPerHit * enemyAttackSpeed * timeToKillEnemy;
+    return { attacksPerSec, dmgPerHit, hitsToKillEnemy, timeToKillEnemy, killsPerSec, enemyDmgPerHit, hpLostPerKill };
+}
+
+// Simulate N seconds of combat. Returns kills achieved and HP remaining.
+// Player dies if HP hits 0 mid-fight; kills are clamped accordingly.
+function simulateCombat(stats, enemy, seconds, startingHp) {
+    const { timeToKillEnemy, hpLostPerKill } = calcCombatParams(stats, enemy);
 
     let hp = startingHp;
     let kills = 0;
@@ -311,13 +316,8 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
 
     // Compute max plausible kills via continuous kill rate (avoids simulateCombat returning 0
     // when one kill takes longer than the tick duration)
-    const _k = 50 * enemy.level;
-    const _playerReduction = enemy.defense / (enemy.defense + _k);
-    const _dmgPerHit = Math.max(1, Math.round((stats.attack + stats.magic) * (1 - _playerReduction)));
-    const _hitsToKill = Math.max(1, Math.ceil(enemy.hp / _dmgPerHit));
-    const _attacksPerSec = 0.5 + stats.speed / 50;
-    const _killsPerSec = _attacksPerSec / _hitsToKill;
-    const maxAllowed = Math.ceil(_killsPerSec * durationSeconds * 1.2);
+    const { killsPerSec } = calcCombatParams(stats, enemy);
+    const maxAllowed = Math.ceil(killsPerSec * durationSeconds * 1.2);
     const validatedKills = Math.min(kills, maxAllowed);
 
     // Still use simulateCombat for accurate HP remaining
