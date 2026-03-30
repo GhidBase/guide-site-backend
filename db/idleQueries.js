@@ -315,7 +315,8 @@ export async function getOrCreateCharacter(userId) {
 }
 
 export async function processTick(userId, { enemyId, kills, durationSeconds }) {
-    const [character, enemy] = await Promise.all([
+    const tickNow = Date.now();
+    let [character, enemy] = await Promise.all([
         prisma.idleCharacter.findUnique({
             where: { userId },
             include: characterInclude,
@@ -327,6 +328,83 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
     if (!enemy) throw new Error("Enemy not found");
     if (enemy.zone !== character.currentZone) throw new Error("Enemy not in current zone");
 
+    // ── Phone-sleep catch-up ──
+    // If the actual gap since lastOnline is much larger than the client-reported durationSeconds,
+    // the device was likely sleeping with the tab frozen (no ticks fired, no visibilitychange).
+    // Simulate the missed time now so the player isn't penalised for device sleep.
+    let offlineGains = null;
+    const SLEEP_THRESHOLD_SECONDS = 60;
+    if (character.lastOnline) {
+        const actualGapSeconds = (tickNow - new Date(character.lastOnline).getTime()) / 1000;
+        const extraGapSeconds = actualGapSeconds - durationSeconds;
+        if (extraGapSeconds > SLEEP_THRESHOLD_SECONDS) {
+            const catchUpSeconds = Math.min(extraGapSeconds, MAX_OFFLINE_SECONDS);
+            const catchUpStats = computeStats(character);
+            const { kills: offlineKills, hpRemaining: offlineHp } = simulateOffline(
+                catchUpStats, enemy, catchUpSeconds, character.currentHp
+            );
+            if (offlineKills > 0) {
+                const xpGained = offlineKills * enemy.xpReward;
+                let newXp = character.xp + xpGained;
+                let newLevel = character.level;
+                let levelUps = 0;
+                while (newXp >= xpForLevel(newLevel + 1)) {
+                    newXp -= xpForLevel(newLevel + 1);
+                    newLevel++;
+                    levelUps++;
+                }
+                const weaponDrops = rollWeaponDrops(offlineKills, enemy.level);
+                await prisma.$transaction([
+                    prisma.idleCharacter.update({
+                        where: { id: character.id },
+                        data: {
+                            xp: newXp,
+                            level: newLevel,
+                            baseAttack: { increment: levelUps },
+                            totalKills: { increment: offlineKills },
+                            currentHp: Math.round(offlineHp),
+                            lastOnline: new Date(tickNow - durationSeconds * 1000),
+                        },
+                    }),
+                    ...weaponDrops.map((w) =>
+                        prisma.idleWeapon.create({
+                            data: {
+                                characterId: character.id,
+                                name: w.name,
+                                weaponType: w.type,
+                                typeLabel: w.typeLabel,
+                                rarity: w.rarity,
+                                origin: w.origin,
+                                level: w.level,
+                                stats: w.stats,
+                                baseStats: w.baseStats,
+                                parts: w.parts,
+                                totalRating: w.totalRating,
+                            },
+                        })
+                    ),
+                ]);
+                offlineGains = {
+                    secondsOffline: Math.floor(extraGapSeconds),
+                    kills: offlineKills,
+                    xpGained,
+                    levelUps,
+                    drops: weaponDrops.map((w) => ({ name: w.name, rarity: w.rarity, count: 1 })),
+                    enemyName: enemy.name,
+                };
+            } else {
+                // No kills during catch-up (probably dead the whole time) — backdate lastOnline
+                // so the normal tick doesn't re-process the same gap
+                await prisma.idleCharacter.update({
+                    where: { id: character.id },
+                    data: { currentHp: Math.round(offlineHp), lastOnline: new Date(tickNow - durationSeconds * 1000) },
+                });
+            }
+            // Reload character with updated state for the normal tick below
+            character = await prisma.idleCharacter.findUnique({ where: { userId }, include: characterInclude });
+        }
+    }
+
     const stats = computeStats(character);
 
     // If the gap is large with zero kills, the browser tab was throttled in the background.
@@ -334,7 +412,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
     // correct elapsed time when the frontend refreshes.
     const THROTTLE_GAP_SECONDS = 30;
     if (kills === 0 && durationSeconds > THROTTLE_GAP_SECONDS) {
-        return { character: formatCharacter(character), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, died: false };
+        return { character: formatCharacter(character), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, died: false, offlineGains };
     }
 
     // If player is dead, regen HP instead of fighting — always restore fully in one tick
@@ -346,7 +424,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
             data: { currentHp: newHp, lastOnline: new Date() },
         });
         const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
-        return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0 };
+        return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, offlineGains };
     }
 
     // Compute max plausible kills via continuous kill rate (avoids simulateCombat returning 0
@@ -361,7 +439,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
     if (validatedKills === 0) {
         await prisma.idleCharacter.update({ where: { id: character.id }, data: { currentHp: Math.round(hpRemaining), lastOnline: new Date() } });
         const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
-        return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0 };
+        return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, offlineGains };
     }
 
     const xpGained = validatedKills * enemy.xpReward;
@@ -425,6 +503,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
         xpGained,
         killsProcessed: validatedKills,
         died: hpRemaining <= 0,
+        offlineGains,
     };
 }
 
