@@ -5,7 +5,7 @@ const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // 8 hours
 const HP_REGEN_PER_SECOND = 10; // used for the recovery timer display on the frontend
 
 // Item types that can drop
-const DROP_TYPES = ["sword", "longsword", "greatsword", "dagger", "chest", "helm", "legs"];
+const DROP_TYPES = ["sword", "chest", "helm", "legs"];
 
 // Equipment slot groups — equipping unequips others in the same slot only
 const SLOT_GROUPS = {
