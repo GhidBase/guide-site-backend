@@ -10,24 +10,21 @@ async function getCharacter(req, res) {
 }
 
 async function tick(req, res) {
-    const { enemyId, kills, durationSeconds } = req.body;
+    const { kills, durationSeconds } = req.body;
 
-    if (!enemyId || typeof kills !== "number" || typeof durationSeconds !== "number") {
-        return res.status(400).json({ error: "enemyId, kills, and durationSeconds are required" });
+    if (typeof kills !== "number" || typeof durationSeconds !== "number") {
+        return res.status(400).json({ error: "kills and durationSeconds are required" });
     }
     if (kills < 0 || durationSeconds <= 0) {
         return res.status(400).json({ error: "Invalid kills or duration" });
     }
 
     try {
-        const result = await db.processTick(req.user.id, { enemyId, kills, durationSeconds });
+        const result = await db.processTick(req.user.id, { kills, durationSeconds });
         res.json(result);
     } catch (err) {
-        if (err.message === "Character not found" || err.message === "Enemy not found") {
+        if (err.message === "Character not found") {
             return res.status(404).json({ error: err.message });
-        }
-        if (err.message === "Enemy not in current zone") {
-            return res.status(400).json({ error: err.message });
         }
         res.status(500).json({ error: err.message });
     }
@@ -52,41 +49,44 @@ async function equip(req, res) {
     }
 }
 
-async function changeZone(req, res) {
-    const { zone } = req.body;
-    if (!zone) {
-        return res.status(400).json({ error: "zone is required" });
+async function changeFloor(req, res) {
+    const { world, floor } = req.body;
+    if (!world || floor === undefined || floor === null) {
+        return res.status(400).json({ error: "world and floor are required" });
     }
 
     try {
-        const character = await db.changeZone(req.user.id, zone);
+        const character = await db.changeFloor(req.user.id, { world, floor });
         res.json(character);
     } catch (err) {
-        if (err.message === "Invalid zone") {
+        if (err.message === "Invalid world" || err.message === "Floor not unlocked" || err.message === "Invalid floor") {
             return res.status(400).json({ error: err.message });
+        }
+        if (err.message === "Character not found") {
+            return res.status(404).json({ error: err.message });
         }
         res.status(500).json({ error: err.message });
     }
 }
 
 async function getEnemies(req, res) {
-    const { zone } = req.query;
-    if (!zone) {
-        return res.status(400).json({ error: "zone query param is required" });
+    const { world } = req.query;
+    if (!world) {
+        return res.status(400).json({ error: "world query param is required" });
     }
 
     try {
-        const enemies = await db.getEnemiesForZone(zone);
+        const enemies = await db.getEnemiesForWorld(world);
         res.json(enemies);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 }
 
-async function getZones(req, res) {
+async function getWorlds(req, res) {
     try {
-        const zones = await db.getZones();
-        res.json(zones);
+        const worlds = await db.getWorlds();
+        res.json(worlds);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -138,4 +138,4 @@ async function revive(req, res) {
     }
 }
 
-export default { getCharacter, tick, equip, discard, discardMany, changeZone, getEnemies, getZones, reset, revive };
+export default { getCharacter, tick, equip, discard, discardMany, changeFloor, getEnemies, getWorlds, reset, revive };

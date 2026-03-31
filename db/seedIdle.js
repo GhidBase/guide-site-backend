@@ -88,101 +88,26 @@ const items = [
 ];
 
 const enemies = [
-    // Forest (starter zone, levels 1-5)
-    {
-        name: "Forest Goblin",
-        zone: "forest",
-        level: 1,
-        hp: 65,
-        attack: 4,
-        defense: 3,
-        attackSpeed: 0.6,
-        xpReward: 50,
-    },
-    {
-        name: "Wild Wolf",
-        zone: "forest",
-        level: 3,
-        hp: 250,
-        attack: 15,
-        defense: 15,
-        attackSpeed: 1.0,
-        xpReward: 100,
-    },
-    {
-        name: "Forest Troll",
-        zone: "forest",
-        level: 5,
-        hp: 400,
-        attack: 28,
-        defense: 20,
-        attackSpeed: 0.4,
-        xpReward: 200,
-    },
+    // Forest pool (regular)
+    { name: "Forest Goblin", world: "forest", isBoss: false, baseHp: 20, baseAttack: 3, baseDefense: 1, attackSpeed: 0.8, xpReward: 15 },
+    { name: "Wild Wolf",     world: "forest", isBoss: false, baseHp: 35, baseAttack: 5, baseDefense: 3, attackSpeed: 1.2, xpReward: 20 },
+    { name: "Forest Troll",  world: "forest", isBoss: false, baseHp: 55, baseAttack: 7, baseDefense: 5, attackSpeed: 0.5, xpReward: 25 },
+    // Forest boss
+    { name: "Giant Slime",   world: "forest", isBoss: true,  baseHp: 300, baseAttack: 20, baseDefense: 12, attackSpeed: 0.7, xpReward: 200 },
 
-    // Cave (mid zone, levels 6-12)
-    {
-        name: "Cave Bat",
-        zone: "cave",
-        level: 6,
-        hp: 550,
-        attack: 42,
-        defense: 35,
-        attackSpeed: 1.5,
-        xpReward: 280,
-    },
-    {
-        name: "Rock Golem",
-        zone: "cave",
-        level: 9,
-        hp: 850,
-        attack: 62,
-        defense: 55,
-        attackSpeed: 0.3,
-        xpReward: 450,
-    },
-    {
-        name: "Cave Troll",
-        zone: "cave",
-        level: 12,
-        hp: 1300,
-        attack: 85,
-        defense: 70,
-        attackSpeed: 0.45,
-        xpReward: 650,
-    },
+    // Cave pool (regular)
+    { name: "Cave Bat",  world: "cave", isBoss: false, baseHp: 25, baseAttack: 5, baseDefense: 2, attackSpeed: 1.5, xpReward: 30 },
+    { name: "Rock Golem",world: "cave", isBoss: false, baseHp: 70, baseAttack: 6, baseDefense: 9, attackSpeed: 0.4, xpReward: 40 },
+    { name: "Cave Troll",world: "cave", isBoss: false, baseHp: 60, baseAttack: 8, baseDefense: 6, attackSpeed: 0.5, xpReward: 35 },
+    // Cave boss
+    { name: "Thornwood Ancient", world: "cave", isBoss: true, baseHp: 400, baseAttack: 25, baseDefense: 18, attackSpeed: 0.5, xpReward: 400 },
 
-    // Dungeon (hard zone, levels 13-20)
-    {
-        name: "Skeleton Warrior",
-        zone: "dungeon",
-        level: 13,
-        hp: 1800,
-        attack: 100,
-        defense: 100,
-        attackSpeed: 0.7,
-        xpReward: 900,
-    },
-    {
-        name: "Dark Knight",
-        zone: "dungeon",
-        level: 17,
-        hp: 2500,
-        attack: 135,
-        defense: 125,
-        attackSpeed: 0.6,
-        xpReward: 1400,
-    },
-    {
-        name: "Ancient Dragon",
-        zone: "dungeon",
-        level: 20,
-        hp: 5000,
-        attack: 180,
-        defense: 175,
-        attackSpeed: 0.35,
-        xpReward: 2500,
-    },
+    // Dungeon pool (regular)
+    { name: "Skeleton Warrior", world: "dungeon", isBoss: false, baseHp: 50, baseAttack: 9,  baseDefense: 6,  attackSpeed: 0.8, xpReward: 50 },
+    { name: "Dark Knight",      world: "dungeon", isBoss: false, baseHp: 75, baseAttack: 12, baseDefense: 10, attackSpeed: 0.6, xpReward: 65 },
+    { name: "Ancient Dragon",   world: "dungeon", isBoss: false, baseHp: 100,baseAttack: 16, baseDefense: 14, attackSpeed: 0.4, xpReward: 85 },
+    // Dungeon boss
+    { name: "Dungeon Warden",   world: "dungeon", isBoss: true,  baseHp: 500, baseAttack: 30, baseDefense: 25, attackSpeed: 0.6, xpReward: 700 },
 ];
 
 // Drop table: [enemyName, itemName, dropRate]
@@ -231,7 +156,15 @@ async function seed() {
     for (const enemy of enemies) {
         await prisma.idleEnemy.upsert({
             where: { name: enemy.name },
-            update: enemy,
+            update: {
+                world: enemy.world,
+                isBoss: enemy.isBoss,
+                baseHp: enemy.baseHp,
+                baseAttack: enemy.baseAttack,
+                baseDefense: enemy.baseDefense,
+                attackSpeed: enemy.attackSpeed,
+                xpReward: enemy.xpReward,
+            },
             create: enemy,
         });
     }

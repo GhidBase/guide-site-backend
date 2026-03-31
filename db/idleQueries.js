@@ -1,8 +1,13 @@
+// @ts-nocheck
 import { prisma } from "../lib/prisma.js";
 import { generateWeapon } from "../utils/weaponGenerator.js";
 
-const MAX_OFFLINE_SECONDS = 8 * 60 * 60; // 8 hours
-const HP_REGEN_PER_SECOND = 10; // used for the recovery timer display on the frontend
+const WORLDS = ["forest", "cave", "dungeon"];
+// floors 1-9 regular, floor 10 = boss
+const KILLS_PER_FLOOR = 10;
+const ENEMY_SCALE = 1.5;
+const MAX_OFFLINE_SECONDS = 8 * 60 * 60;
+const HP_REGEN_PER_SECOND = 10;
 
 // Item types that can drop
 const DROP_TYPES = ["sword", "chest", "helm", "legs"];
@@ -35,7 +40,7 @@ export function xpForLevel(level) {
 }
 
 // Compute effective stats from equipped generated weapons
-function computeStats(character) {
+export function computeStats(character) {
     let attack = character.baseAttack;
     let defense = character.baseDefense;
     let maxHp = character.baseMaxHp;
@@ -136,57 +141,6 @@ function simulateOffline(stats, enemy, seconds, startingHp) {
     return { kills: totalKills, hpRemaining: Math.max(0, hp) };
 }
 
-function formatCharacter(character) {
-    const stats = computeStats(character);
-    const xpNeeded = xpForLevel(character.level + 1);
-    const currentHp = Math.min(character.currentHp, stats.maxHp);
-
-    const weaponItems = character.weapons.map((w) => ({
-        id: w.id,
-        source: "weapon",
-        name: w.name,
-        type: w.weaponType,
-        typeLabel: w.typeLabel,
-        rarity: w.rarity,
-        origin: w.origin,
-        level: w.level,
-        stats: w.stats,
-        baseStats: w.baseStats,
-        parts: w.parts,
-        totalRating: w.totalRating,
-        equipped: w.equipped,
-        quantity: 1,
-    }));
-
-    return {
-        id: character.id,
-        level: character.level,
-        xp: character.xp,
-        xpNeeded,
-        currentZone: character.currentZone,
-        totalKills: character.totalKills,
-        currentEnemyId: character.currentEnemyId,
-        baseAttack: character.baseAttack,
-        baseDefense: character.baseDefense,
-        baseMaxHp: character.baseMaxHp,
-        attack: stats.attack,
-        defense: stats.defense,
-        maxHp: stats.maxHp,
-        speed: stats.speed,
-        magic: stats.magic,
-        currentHp,
-        inventory: weaponItems,
-        createdAt: character.createdAt,
-        updatedAt: character.updatedAt,
-    };
-}
-
-const characterInclude = {
-    weapons: {
-        orderBy: { id: "desc" },
-    },
-};
-
 // Roll weapon drops for a number of kills against an enemy
 function rollWeaponDrops(kills, enemyLevel) {
     const drops = [];
@@ -200,31 +154,141 @@ function rollWeaponDrops(kills, enemyLevel) {
     return drops;
 }
 
+// ── Floor/world helpers ──
+
+function worldFloorLevel(world, floor) {
+    const idx = WORLDS.indexOf(world);
+    if (idx === -1) throw new Error(`Unknown world: ${world}`);
+    return idx * 10 + floor;
+}
+
+function scaleEnemy(enemy, floorLevel) {
+    const factor = 1 + Math.log(floorLevel + 1) * ENEMY_SCALE;
+    return {
+        id: enemy.id,
+        name: enemy.name,
+        world: enemy.world,
+        isBoss: enemy.isBoss,
+        attackSpeed: enemy.attackSpeed,
+        level: floorLevel,
+        hp: Math.round(enemy.baseHp * factor),
+        attack: Math.round(enemy.baseAttack * factor),
+        defense: Math.round(enemy.baseDefense * factor),
+        xpReward: Math.round(enemy.xpReward * floorLevel),
+    };
+}
+
+function getWorldProgress(character, world) {
+    const p = (typeof character.worldProgress === 'object' && character.worldProgress !== null)
+        ? character.worldProgress : {};
+    return p[world] ?? 0;
+}
+
+function isWorldUnlocked(character, world) {
+    const idx = WORLDS.indexOf(world);
+    if (idx === 0) return true;
+    return getWorldProgress(character, WORLDS[idx - 1]) >= 10;
+}
+
+function isFloorUnlocked(character, world, floor) {
+    if (!isWorldUnlocked(character, world)) return false;
+    if (floor === 1) return true;
+    if (floor === 10) return getWorldProgress(character, world) >= 9;
+    return getWorldProgress(character, world) >= floor - 1;
+}
+
+async function pickEnemy(world, isBoss) {
+    const enemies = await prisma.idleEnemy.findMany({ where: { world, isBoss } });
+    if (enemies.length === 0) throw new Error(`No ${isBoss ? 'boss' : 'regular'} enemies found for world: ${world}`);
+    return enemies[Math.floor(Math.random() * enemies.length)];
+}
+
+const characterInclude = {
+    weapons: { orderBy: { id: "desc" } },
+    currentEnemy: true,
+};
+
+function formatCharacter(character) {
+    const stats = computeStats(character);
+    const xpNeeded = xpForLevel(character.level + 1);
+    const currentHp = Math.min(character.currentHp, stats.maxHp);
+    const floorLevel = worldFloorLevel(character.currentWorld, character.currentFloor);
+
+    const weaponItems = character.weapons.map((w) => ({
+        id: w.id, source: "weapon", name: w.name, type: w.weaponType,
+        typeLabel: w.typeLabel, rarity: w.rarity, origin: w.origin, level: w.level,
+        stats: w.stats, baseStats: w.baseStats, parts: w.parts,
+        totalRating: w.totalRating, equipped: w.equipped, quantity: 1,
+    }));
+
+    const currentEnemy = character.currentEnemy
+        ? scaleEnemy(character.currentEnemy, floorLevel)
+        : null;
+
+    return {
+        id: character.id,
+        level: character.level,
+        xp: character.xp,
+        xpNeeded,
+        currentWorld: character.currentWorld,
+        currentFloor: character.currentFloor,
+        killsOnFloor: character.killsOnFloor,
+        worldProgress: character.worldProgress ?? {},
+        totalKills: character.totalKills,
+        baseAttack: character.baseAttack,
+        baseDefense: character.baseDefense,
+        baseMaxHp: character.baseMaxHp,
+        attack: stats.attack,
+        defense: stats.defense,
+        maxHp: stats.maxHp,
+        speed: stats.speed,
+        magic: stats.magic,
+        currentHp,
+        currentEnemy,
+        inventory: weaponItems,
+        createdAt: character.createdAt,
+        updatedAt: character.updatedAt,
+    };
+}
+
+async function saveWeaponDrops(characterId, drops) {
+    return drops.map((w) =>
+        prisma.idleWeapon.create({
+            data: {
+                characterId,
+                name: w.name, weaponType: w.type, typeLabel: w.typeLabel,
+                rarity: w.rarity, origin: w.origin, level: w.level,
+                stats: w.stats, baseStats: w.baseStats, parts: w.parts,
+                totalRating: w.totalRating,
+            },
+        })
+    );
+}
+
 export async function getOrCreateCharacter(userId) {
     let character = await prisma.idleCharacter.findUnique({
         where: { userId },
-        include: {
-            ...characterInclude,
-            currentEnemy: {
-                include: { drops: { include: { item: true } } },
-            },
-        },
+        include: characterInclude,
     });
 
     if (!character) {
         character = await prisma.idleCharacter.create({
             data: { userId },
-            include: {
-                ...characterInclude,
-                currentEnemy: { include: { drops: { include: { item: true } } } },
-            },
+            include: characterInclude,
+        });
+        // Pick a starting enemy for forest floor 1
+        const startingEnemy = await pickEnemy("forest", false);
+        character = await prisma.idleCharacter.update({
+            where: { id: character.id },
+            data: { currentEnemyId: startingEnemy.id },
+            include: characterInclude,
         });
         return { character: formatCharacter(character), offlineGains: null };
     }
 
     // Calculate offline progress
     let offlineGains = null;
-    if (character.lastOnline && character.currentEnemy && character.currentEnemy.zone === character.currentZone) {
+    if (character.lastOnline && character.currentEnemy) {
         const secondsOffline = Math.min(
             (Date.now() - new Date(character.lastOnline).getTime()) / 1000,
             MAX_OFFLINE_SECONDS
@@ -232,13 +296,15 @@ export async function getOrCreateCharacter(userId) {
 
         if (secondsOffline >= 1) {
             const stats = computeStats(character);
+            const floorLevel = worldFloorLevel(character.currentWorld, character.currentFloor);
+            const scaledEnemy = scaleEnemy(character.currentEnemy, floorLevel);
 
             const { kills, hpRemaining } = simulateOffline(
-                stats, character.currentEnemy, secondsOffline, character.currentHp
+                stats, scaledEnemy, secondsOffline, character.currentHp
             );
 
             if (kills > 0) {
-                const xpGained = kills * character.currentEnemy.xpReward;
+                const xpGained = kills * scaledEnemy.xpReward;
                 let newXp = character.xp + xpGained;
                 let newLevel = character.level;
                 let levelUps = 0;
@@ -249,8 +315,57 @@ export async function getOrCreateCharacter(userId) {
                     levelUps++;
                 }
 
-                const weaponDrops = rollWeaponDrops(kills, character.currentEnemy.level);
+                const weaponDrops = rollWeaponDrops(kills, floorLevel);
 
+                // Compute floor advances
+                let currentWorld = character.currentWorld;
+                let currentFloor = character.currentFloor;
+                let killsOnFloor = character.killsOnFloor;
+                let worldProgress = (typeof character.worldProgress === 'object' && character.worldProgress !== null)
+                    ? { ...character.worldProgress } : {};
+
+                let remainingKills = kills;
+                while (remainingKills > 0) {
+                    const isBoss = currentFloor === 10;
+                    const alreadyCompleted = (worldProgress[currentWorld] ?? 0) >= currentFloor;
+
+                    if (isBoss) {
+                        // Boss: 1 kill to beat
+                        remainingKills--;
+                        worldProgress[currentWorld] = 10;
+                        const nextWorldIdx = WORLDS.indexOf(currentWorld) + 1;
+                        if (nextWorldIdx < WORLDS.length) {
+                            currentWorld = WORLDS[nextWorldIdx];
+                            currentFloor = 1;
+                            killsOnFloor = 0;
+                        } else {
+                            // Already at last world boss — stay
+                            killsOnFloor = 0;
+                            break;
+                        }
+                    } else if (!alreadyCompleted) {
+                        const killsNeeded = KILLS_PER_FLOOR - killsOnFloor;
+                        if (remainingKills >= killsNeeded) {
+                            remainingKills -= killsNeeded;
+                            worldProgress[currentWorld] = currentFloor;
+                            currentFloor++;
+                            killsOnFloor = 0;
+                            if (currentFloor > 10) {
+                                // Shouldn't happen but guard
+                                currentFloor = 10;
+                                break;
+                            }
+                        } else {
+                            killsOnFloor += remainingKills;
+                            remainingKills = 0;
+                        }
+                    } else {
+                        // Already completed floor — don't advance, consume remaining kills here
+                        break;
+                    }
+                }
+
+                const dropOps = await saveWeaponDrops(character.id, weaponDrops);
                 await prisma.$transaction([
                     prisma.idleCharacter.update({
                         where: { id: character.id },
@@ -261,25 +376,13 @@ export async function getOrCreateCharacter(userId) {
                             totalKills: { increment: kills },
                             currentHp: Math.round(hpRemaining),
                             lastOnline: new Date(),
+                            currentWorld,
+                            currentFloor,
+                            killsOnFloor,
+                            worldProgress,
                         },
                     }),
-                    ...weaponDrops.map((w) =>
-                        prisma.idleWeapon.create({
-                            data: {
-                                characterId: character.id,
-                                name: w.name,
-                                weaponType: w.type,
-                                typeLabel: w.typeLabel,
-                                rarity: w.rarity,
-                                origin: w.origin,
-                                level: w.level,
-                                stats: w.stats,
-                                baseStats: w.baseStats,
-                                parts: w.parts,
-                                totalRating: w.totalRating,
-                            },
-                        })
-                    ),
+                    ...dropOps,
                 ]);
 
                 offlineGains = {
@@ -297,10 +400,7 @@ export async function getOrCreateCharacter(userId) {
 
                 character = await prisma.idleCharacter.findUnique({
                     where: { userId },
-                    include: {
-                        ...characterInclude,
-                        currentEnemy: { include: { drops: { include: { item: true } } } },
-                    },
+                    include: characterInclude,
                 });
             }
         }
@@ -314,24 +414,30 @@ export async function getOrCreateCharacter(userId) {
     return { character: formatCharacter(character), offlineGains };
 }
 
-export async function processTick(userId, { enemyId, kills, durationSeconds }) {
+export async function processTick(userId, { kills, durationSeconds }) {
     const tickNow = Date.now();
-    let [character, enemy] = await Promise.all([
-        prisma.idleCharacter.findUnique({
-            where: { userId },
-            include: characterInclude,
-        }),
-        prisma.idleEnemy.findUnique({ where: { id: enemyId } }),
-    ]);
+    let character = await prisma.idleCharacter.findUnique({
+        where: { userId },
+        include: characterInclude,
+    });
 
     if (!character) throw new Error("Character not found");
-    if (!enemy) throw new Error("Enemy not found");
-    if (enemy.zone !== character.currentZone) throw new Error("Enemy not in current zone");
+
+    // If no currentEnemy, pick one
+    if (!character.currentEnemy) {
+        const isBoss = character.currentFloor === 10;
+        const enemy = await pickEnemy(character.currentWorld, isBoss);
+        character = await prisma.idleCharacter.update({
+            where: { id: character.id },
+            data: { currentEnemyId: enemy.id },
+            include: characterInclude,
+        });
+    }
+
+    const floorLevel = worldFloorLevel(character.currentWorld, character.currentFloor);
+    const scaledEnemy = scaleEnemy(character.currentEnemy, floorLevel);
 
     // ── Phone-sleep catch-up ──
-    // If the actual gap since lastOnline is much larger than the client-reported durationSeconds,
-    // the device was likely sleeping with the tab frozen (no ticks fired, no visibilitychange).
-    // Simulate the missed time now so the player isn't penalised for device sleep.
     let offlineGains = null;
     const SLEEP_THRESHOLD_SECONDS = 60;
     if (character.lastOnline) {
@@ -341,10 +447,10 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
             const catchUpSeconds = Math.min(extraGapSeconds, MAX_OFFLINE_SECONDS);
             const catchUpStats = computeStats(character);
             const { kills: offlineKills, hpRemaining: offlineHp } = simulateOffline(
-                catchUpStats, enemy, catchUpSeconds, character.currentHp
+                catchUpStats, scaledEnemy, catchUpSeconds, character.currentHp
             );
             if (offlineKills > 0) {
-                const xpGained = offlineKills * enemy.xpReward;
+                const xpGained = offlineKills * scaledEnemy.xpReward;
                 let newXp = character.xp + xpGained;
                 let newLevel = character.level;
                 let levelUps = 0;
@@ -353,7 +459,8 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
                     newLevel++;
                     levelUps++;
                 }
-                const weaponDrops = rollWeaponDrops(offlineKills, enemy.level);
+                const weaponDrops = rollWeaponDrops(offlineKills, floorLevel);
+                const dropOps = await saveWeaponDrops(character.id, weaponDrops);
                 await prisma.$transaction([
                     prisma.idleCharacter.update({
                         where: { id: character.id },
@@ -366,23 +473,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
                             lastOnline: new Date(tickNow - durationSeconds * 1000),
                         },
                     }),
-                    ...weaponDrops.map((w) =>
-                        prisma.idleWeapon.create({
-                            data: {
-                                characterId: character.id,
-                                name: w.name,
-                                weaponType: w.type,
-                                typeLabel: w.typeLabel,
-                                rarity: w.rarity,
-                                origin: w.origin,
-                                level: w.level,
-                                stats: w.stats,
-                                baseStats: w.baseStats,
-                                parts: w.parts,
-                                totalRating: w.totalRating,
-                            },
-                        })
-                    ),
+                    ...dropOps,
                 ]);
                 offlineGains = {
                     secondsOffline: Math.floor(extraGapSeconds),
@@ -390,59 +481,50 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
                     xpGained,
                     levelUps,
                     drops: weaponDrops.map((w) => ({ name: w.name, rarity: w.rarity, count: 1 })),
-                    enemyName: enemy.name,
+                    enemyName: character.currentEnemy.name,
                 };
             } else {
-                // No kills during catch-up (probably dead the whole time) — backdate lastOnline
-                // so the normal tick doesn't re-process the same gap
                 await prisma.idleCharacter.update({
                     where: { id: character.id },
                     data: { currentHp: Math.round(offlineHp), lastOnline: new Date(tickNow - durationSeconds * 1000) },
                 });
             }
-            // Reload character with updated state for the normal tick below
+            // Reload character with updated state
             character = await prisma.idleCharacter.findUnique({ where: { userId }, include: characterInclude });
         }
     }
 
     const stats = computeStats(character);
 
-    // If the gap is large with zero kills, the browser tab was throttled in the background.
-    // Skip the tick entirely — don't touch lastOnline so the offline gains system sees the
-    // correct elapsed time when the frontend refreshes.
     const THROTTLE_GAP_SECONDS = 30;
     if (kills === 0 && durationSeconds > THROTTLE_GAP_SECONDS) {
         return { character: formatCharacter(character), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, died: false, offlineGains };
     }
 
-    // If player is dead, regen HP instead of fighting — always restore fully in one tick
-    // to avoid the server/frontend disagreeing on alive state across multiple ticks
+    // If player is dead, regen HP
     if (character.currentHp <= 0) {
         const newHp = stats.maxHp;
         await prisma.idleCharacter.update({
             where: { id: character.id },
-            data: { currentHp: newHp, lastOnline: new Date(), currentEnemyId: enemyId },
+            data: { currentHp: newHp, lastOnline: new Date() },
         });
         const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
         return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, offlineGains };
     }
 
-    // Compute max plausible kills via continuous kill rate (avoids simulateCombat returning 0
-    // when one kill takes longer than the tick duration)
-    const { killsPerSec } = calcCombatParams(stats, enemy);
+    const { killsPerSec } = calcCombatParams(stats, scaledEnemy);
     const maxAllowed = Math.ceil(killsPerSec * durationSeconds * 1.2);
-    const validatedKills = Math.min(kills, maxAllowed);
+    let validatedKills = Math.min(kills, maxAllowed);
 
-    // Still use simulateCombat for accurate HP remaining
-    const { hpRemaining } = simulateCombat(stats, enemy, durationSeconds, character.currentHp);
+    const { hpRemaining } = simulateCombat(stats, scaledEnemy, durationSeconds, character.currentHp);
 
     if (validatedKills === 0) {
-        await prisma.idleCharacter.update({ where: { id: character.id }, data: { currentHp: Math.round(hpRemaining), lastOnline: new Date(), currentEnemyId: enemyId } });
+        await prisma.idleCharacter.update({ where: { id: character.id }, data: { currentHp: Math.round(hpRemaining), lastOnline: new Date() } });
         const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
         return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, offlineGains };
     }
 
-    const xpGained = validatedKills * enemy.xpReward;
+    const xpGained = validatedKills * scaledEnemy.xpReward;
     let newXp = character.xp + xpGained;
     let newLevel = character.level;
     let levelUps = 0;
@@ -453,8 +535,83 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
         levelUps++;
     }
 
-    const weaponDrops = rollWeaponDrops(validatedKills, enemy.level);
+    const weaponDrops = rollWeaponDrops(validatedKills, floorLevel);
 
+    // ── Floor advancement logic ──
+    const isBoss = character.currentFloor === 10;
+    const alreadyCompleted = getWorldProgress(character, character.currentWorld) >= character.currentFloor;
+
+    let currentWorld = character.currentWorld;
+    let currentFloor = character.currentFloor;
+    let killsOnFloor = character.killsOnFloor;
+    let worldProgress = (typeof character.worldProgress === 'object' && character.worldProgress !== null)
+        ? { ...character.worldProgress } : {};
+
+    let floorAdvanced = false;
+    let bossKilled = false;
+    let newWorld = null;
+
+    let nextEnemyId = character.currentEnemyId;
+
+    if (isBoss) {
+        // Cap kills at 1 for boss
+        validatedKills = Math.min(validatedKills, 1);
+
+        if (validatedKills > 0 && hpRemaining > 0) {
+            // Boss beaten
+            bossKilled = true;
+            worldProgress[currentWorld] = 10;
+            const nextWorldIdx = WORLDS.indexOf(currentWorld) + 1;
+            if (nextWorldIdx < WORLDS.length) {
+                newWorld = WORLDS[nextWorldIdx];
+                currentWorld = newWorld;
+                currentFloor = 1;
+                killsOnFloor = 0;
+                floorAdvanced = true;
+                const nextEnemy = await pickEnemy(currentWorld, false);
+                nextEnemyId = nextEnemy.id;
+            } else {
+                // Last world boss — stay
+                killsOnFloor = 0;
+                const nextEnemy = await pickEnemy(currentWorld, true);
+                nextEnemyId = nextEnemy.id;
+            }
+        } else if (hpRemaining <= 0) {
+            // Player died on boss floor — drop to floor 9
+            currentFloor = 9;
+            killsOnFloor = 0;
+            const nextEnemy = await pickEnemy(currentWorld, false);
+            nextEnemyId = nextEnemy.id;
+        }
+    } else if (!alreadyCompleted) {
+        // First-time floor completion
+        const newKillsOnFloor = killsOnFloor + validatedKills;
+        if (newKillsOnFloor >= KILLS_PER_FLOOR) {
+            worldProgress[currentWorld] = currentFloor;
+            currentFloor++;
+            killsOnFloor = 0;
+            floorAdvanced = true;
+            if (currentFloor === 10) {
+                // Advance to boss floor — pick boss enemy
+                const nextEnemy = await pickEnemy(currentWorld, true);
+                nextEnemyId = nextEnemy.id;
+            } else {
+                const nextEnemy = await pickEnemy(currentWorld, false);
+                nextEnemyId = nextEnemy.id;
+            }
+        } else {
+            killsOnFloor = newKillsOnFloor;
+            // Pick next random enemy for same floor
+            const nextEnemy = await pickEnemy(currentWorld, false);
+            nextEnemyId = nextEnemy.id;
+        }
+    } else {
+        // Already completed floor — keep going, don't increment killsOnFloor
+        const nextEnemy = await pickEnemy(currentWorld, currentFloor === 10);
+        nextEnemyId = nextEnemy.id;
+    }
+
+    const dropOps = await saveWeaponDrops(character.id, weaponDrops);
     await prisma.$transaction([
         prisma.idleCharacter.update({
             where: { id: character.id },
@@ -465,26 +622,14 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
                 totalKills: { increment: validatedKills },
                 currentHp: Math.round(hpRemaining),
                 lastOnline: new Date(),
-                currentEnemyId: enemyId,
+                currentWorld,
+                currentFloor,
+                killsOnFloor,
+                worldProgress,
+                currentEnemyId: nextEnemyId,
             },
         }),
-        ...weaponDrops.map((w) =>
-            prisma.idleWeapon.create({
-                data: {
-                    characterId: character.id,
-                    name: w.name,
-                    weaponType: w.type,
-                    typeLabel: w.typeLabel,
-                    rarity: w.rarity,
-                    origin: w.origin,
-                    level: w.level,
-                    stats: w.stats,
-                    baseStats: w.baseStats,
-                    parts: w.parts,
-                    totalRating: w.totalRating,
-                },
-            })
-        ),
+        ...dropOps,
     ]);
 
     const updatedCharacter = await prisma.idleCharacter.findUnique({
@@ -504,7 +649,34 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
         killsProcessed: validatedKills,
         died: hpRemaining <= 0,
         offlineGains,
+        floorAdvanced,
+        bossKilled,
+        newWorld,
     };
+}
+
+export async function changeFloor(userId, { world, floor }) {
+    const character = await prisma.idleCharacter.findUnique({ where: { userId }, include: characterInclude });
+    if (!character) throw new Error("Character not found");
+    if (!WORLDS.includes(world)) throw new Error("Invalid world");
+    if (floor < 1 || floor > 10) throw new Error("Invalid floor");
+    if (!isFloorUnlocked(character, world, floor)) throw new Error("Floor not unlocked");
+
+    const enemy = await pickEnemy(world, floor === 10);
+    const updated = await prisma.idleCharacter.update({
+        where: { id: character.id },
+        data: { currentWorld: world, currentFloor: floor, killsOnFloor: 0, currentEnemyId: enemy.id },
+        include: characterInclude,
+    });
+    return formatCharacter(updated);
+}
+
+export async function getEnemiesForWorld(world) {
+    return prisma.idleEnemy.findMany({ where: { world }, orderBy: { id: "asc" } });
+}
+
+export async function getWorlds() {
+    return [...WORLDS];
 }
 
 export async function resetCharacter(userId) {
@@ -521,6 +693,11 @@ export async function resetCharacter(userId) {
             baseMaxHp: 100,
             currentHp: 100,
             totalKills: 0,
+            currentWorld: "forest",
+            currentFloor: 1,
+            killsOnFloor: 0,
+            worldProgress: {},
+            currentEnemyId: null,
         },
     });
 
@@ -639,36 +816,4 @@ export async function discardItem(userId, itemId, source) {
         include: characterInclude,
     });
     return formatCharacter(updated);
-}
-
-export async function changeZone(userId, zone) {
-    const validZones = await prisma.idleEnemy.findMany({
-        where: { zone },
-        select: { zone: true },
-    });
-    if (validZones.length === 0) throw new Error("Invalid zone");
-
-    const updated = await prisma.idleCharacter.update({
-        where: { userId },
-        data: { currentZone: zone, currentEnemyId: null },
-        include: characterInclude,
-    });
-
-    return formatCharacter(updated);
-}
-
-export async function getEnemiesForZone(zone) {
-    return prisma.idleEnemy.findMany({
-        where: { zone },
-        orderBy: { level: "asc" },
-    });
-}
-
-export async function getZones() {
-    const result = await prisma.idleEnemy.findMany({
-        select: { zone: true },
-        distinct: ["zone"],
-        orderBy: { level: "asc" },
-    });
-    return result.map((r) => r.zone);
 }

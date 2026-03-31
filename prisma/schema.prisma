@@ -406,7 +406,10 @@ model IdleCharacter {
   baseMaxHp   Int    @default(100)
   currentHp   Int    @default(100)
 
-  currentZone     String    @default("forest")
+  currentWorld    String    @default("forest")
+  currentFloor    Int       @default(1)
+  killsOnFloor    Int       @default(0)
+  worldProgress   Json      @default("{}")
   totalKills      Int       @default(0)
   lastOnline      DateTime?
   currentEnemyId  Int?
@@ -445,20 +448,20 @@ model IdleInventoryItem {
 }
 
 model IdleEnemy {
-  id        Int    @id @default(autoincrement())
-  name      String @unique
-  zone      String
-  level     Int    @default(1)
-  hp          Int
-  attack      Int
-  defense     Int
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  world       String
+  isBoss      Boolean @default(false)
+  baseHp      Int
+  baseAttack  Int
+  baseDefense Int
   attackSpeed Float  @default(1.0)
   xpReward    Int
 
   drops       IdleEnemyDrop[]
   characters  IdleCharacter[]
 
-  @@index([zone])
+  @@index([world])
 }
 
 model IdleWeapon {
