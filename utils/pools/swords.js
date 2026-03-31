@@ -64,7 +64,7 @@ const SWORD_BLADES = [
     {
         id: "sw_h4",
         origin: "Human",
-        name: "Fine Steel Sword",
+        name: "Bronze Sword",
         rating: 18,
         stats: { attack: 8, defense: 6, speed: 1 },
     },
