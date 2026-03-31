@@ -214,7 +214,7 @@ async function pickEnemy(world, isBoss) {
 }
 
 const characterInclude = {
-    weapons: { orderBy: { id: "desc" } },
+    weapons: { orderBy: { id: "desc" }, take: 100 },
     currentEnemy: true,
 };
 
@@ -394,7 +394,7 @@ export async function getOrCreateCharacter(userId) {
                         include: characterInclude,
                     }),
                     ...dropOps,
-                ]);
+                ], { timeout: 15000 });
                 character = updatedChar;
 
                 offlineGains = {
@@ -483,7 +483,7 @@ export async function processTick(userId, { kills, durationSeconds }) {
                         include: characterInclude,
                     }),
                     ...dropOps,
-                ]);
+                ], { timeout: 15000 });
                 character = updatedChar;
                 offlineGains = {
                     secondsOffline: Math.floor(extraGapSeconds),
@@ -642,7 +642,7 @@ export async function processTick(userId, { kills, durationSeconds }) {
             include: characterInclude,
         }),
         ...dropOps,
-    ]);
+    ], { timeout: 15000 });
 
     return {
         character: formatCharacter(updatedCharacter),
@@ -791,7 +791,7 @@ export async function discardMany(userId, items) {
         ...(itemIds.length > 0 ? [prisma.idleInventoryItem.deleteMany({
             where: { id: { in: itemIds }, characterId: character.id },
         })] : []),
-    ]);
+    ], { timeout: 15000 });
 
     const updated = await prisma.idleCharacter.findUnique({
         where: { id: character.id },
