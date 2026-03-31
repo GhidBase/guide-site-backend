@@ -80,14 +80,14 @@ function calcCombatParams(stats, enemy) {
 
 // Simulate N seconds of combat. Returns kills achieved, HP remaining, and seconds used.
 // Player dies if HP hits 0 mid-fight; kills are clamped accordingly.
-function simulateCombat(stats, enemy, seconds, startingHp) {
+function simulateCombat(stats, enemy, seconds, startingHp, maxKills = Infinity) {
     const { timeToKillEnemy, hpLostPerKill } = calcCombatParams(stats, enemy);
 
     let hp = startingHp;
     let kills = 0;
     let timeLeft = seconds;
 
-    while (timeLeft >= timeToKillEnemy && hp > 0) {
+    while (timeLeft >= timeToKillEnemy && hp > 0 && kills < maxKills) {
         if (hp <= hpLostPerKill) {
             // Player dies partway through this kill — advance time proportionally
             timeLeft -= (hp / hpLostPerKill) * timeToKillEnemy;
@@ -100,7 +100,7 @@ function simulateCombat(stats, enemy, seconds, startingHp) {
     }
 
     // Account for damage taken during the partial kill cycle remaining
-    if (timeLeft > 0 && hp > 0) {
+    if (timeLeft > 0 && hp > 0 && kills < maxKills) {
         const partialDamage = (timeLeft / timeToKillEnemy) * hpLostPerKill;
         hp = Math.max(0, hp - partialDamage);
         timeLeft = 0;
@@ -109,12 +109,18 @@ function simulateCombat(stats, enemy, seconds, startingHp) {
     return { kills, hpRemaining: Math.max(0, hp), secondsUsed: seconds - timeLeft };
 }
 
-// Simulate offline time with full death/regen cycles.
-// Unlike simulateCombat (single pass), this loops: die → regen → fight again.
-function simulateOffline(stats, enemy, seconds, startingHp) {
+// Simulate offline time across multiple floors with death/regen cycles.
+// Returns killsByLevel (array of {floorLevel, kills, xpPerKill}) for accurate
+// per-floor drop and XP generation, plus the final floor state.
+function simulateOfflineFloors(stats, allEnemies, startWorld, startFloor, startKillsOnFloor, startWorldProgress, seconds, startingHp) {
     let timeLeft = seconds;
     let hp = startingHp;
-    let totalKills = 0;
+    let world = startWorld;
+    let floor = startFloor;
+    let floorKills = startKillsOnFloor;
+    let progress = (typeof startWorldProgress === 'object' && startWorldProgress !== null)
+        ? { ...startWorldProgress } : {};
+    const killsByLevel = [];
 
     // Handle starting dead
     if (hp <= 0) {
@@ -124,21 +130,68 @@ function simulateOffline(stats, enemy, seconds, startingHp) {
     }
 
     while (timeLeft > 0 && hp > 0) {
-        const { kills, hpRemaining, secondsUsed } = simulateCombat(stats, enemy, timeLeft, hp);
-        totalKills += kills;
-        hp = hpRemaining;
+        const isBoss = floor === 10;
+        const floorLevel = worldFloorLevel(world, floor);
+        const alreadyCompleted = (progress[world] ?? 0) >= floor;
+        const killsToComplete = alreadyCompleted ? Infinity : (isBoss ? 1 : KILLS_PER_FLOOR - floorKills);
+
+        const matches = allEnemies.filter(e => e.world === world && e.isBoss === isBoss);
+        if (matches.length === 0) break;
+        const scaledEnemy = scaleEnemy(matches[Math.floor(Math.random() * matches.length)], floorLevel);
+
+        const { kills, hpRemaining, secondsUsed } = simulateCombat(stats, scaledEnemy, timeLeft, hp, killsToComplete);
         timeLeft -= secondsUsed;
+        hp = hpRemaining;
 
-        if (hp > 0) break; // survived to end of available time
+        if (kills > 0) {
+            killsByLevel.push({ floorLevel, kills, xpPerKill: scaledEnemy.xpReward });
+        }
 
-        // Died — regen before fighting again
-        const regenTime = Math.min(timeLeft, stats.maxHp / HP_REGEN_PER_SECOND);
-        if (regenTime <= 0) break;
-        hp = Math.min(stats.maxHp, HP_REGEN_PER_SECOND * regenTime);
-        timeLeft -= regenTime;
+        if (!alreadyCompleted && kills >= killsToComplete) {
+            // Floor completed — advance
+            if (isBoss) {
+                progress[world] = 10;
+                const nextWorldIdx = WORLDS.indexOf(world) + 1;
+                if (nextWorldIdx < WORLDS.length) {
+                    world = WORLDS[nextWorldIdx];
+                    floor = 1;
+                } else {
+                    floorKills = 0;
+                    // Reached end — next iteration will be alreadyCompleted
+                }
+            } else {
+                progress[world] = floor;
+                floor++;
+            }
+            floorKills = 0;
+        } else if (!alreadyCompleted) {
+            // Partial progress — track floor kills, handle boss death drop
+            if (hp <= 0 && isBoss) {
+                floor = 9;
+                floorKills = 0;
+            } else {
+                floorKills += kills;
+            }
+        }
+        // alreadyCompleted: floorKills unchanged
+
+        // Death/regen
+        if (hp <= 0) {
+            const regenTime = Math.min(timeLeft, stats.maxHp / HP_REGEN_PER_SECOND);
+            if (regenTime <= 0) break;
+            hp = Math.min(stats.maxHp, HP_REGEN_PER_SECOND * regenTime);
+            timeLeft -= regenTime;
+        }
     }
 
-    return { kills: totalKills, hpRemaining: Math.max(0, hp) };
+    return {
+        killsByLevel,
+        hpRemaining: Math.max(0, hp),
+        currentWorld: world,
+        currentFloor: floor,
+        killsOnFloor: floorKills,
+        worldProgress: progress,
+    };
 }
 
 // Roll weapon drops for a number of kills against an enemy
@@ -305,15 +358,21 @@ export async function getOrCreateCharacter(userId) {
 
         if (secondsOffline >= 1) {
             const stats = computeStats(character);
-            const floorLevel = worldFloorLevel(character.currentWorld, character.currentFloor);
-            const scaledEnemy = scaleEnemy(character.currentEnemy, floorLevel);
+            const allEnemies = await getAllEnemiesCached();
 
-            const { kills, hpRemaining } = simulateOffline(
-                stats, scaledEnemy, secondsOffline, character.currentHp
+            const {
+                killsByLevel, hpRemaining,
+                currentWorld, currentFloor, killsOnFloor, worldProgress,
+            } = simulateOfflineFloors(
+                stats, allEnemies,
+                character.currentWorld, character.currentFloor, character.killsOnFloor,
+                character.worldProgress, secondsOffline, character.currentHp
             );
 
-            if (kills > 0) {
-                const xpGained = kills * scaledEnemy.xpReward;
+            const totalKills = killsByLevel.reduce((sum, k) => sum + k.kills, 0);
+
+            if (totalKills > 0) {
+                const xpGained = killsByLevel.reduce((sum, k) => sum + k.kills * k.xpPerKill, 0);
                 let newXp = character.xp + xpGained;
                 let newLevel = character.level;
                 let levelUps = 0;
@@ -324,55 +383,10 @@ export async function getOrCreateCharacter(userId) {
                     levelUps++;
                 }
 
-                const weaponDrops = rollWeaponDrops(kills, floorLevel);
-
-                // Compute floor advances
-                let currentWorld = character.currentWorld;
-                let currentFloor = character.currentFloor;
-                let killsOnFloor = character.killsOnFloor;
-                let worldProgress = (typeof character.worldProgress === 'object' && character.worldProgress !== null)
-                    ? { ...character.worldProgress } : {};
-
-                let remainingKills = kills;
-                while (remainingKills > 0) {
-                    const isBoss = currentFloor === 10;
-                    const alreadyCompleted = (worldProgress[currentWorld] ?? 0) >= currentFloor;
-
-                    if (isBoss) {
-                        // Boss: 1 kill to beat
-                        remainingKills--;
-                        worldProgress[currentWorld] = 10;
-                        const nextWorldIdx = WORLDS.indexOf(currentWorld) + 1;
-                        if (nextWorldIdx < WORLDS.length) {
-                            currentWorld = WORLDS[nextWorldIdx];
-                            currentFloor = 1;
-                            killsOnFloor = 0;
-                        } else {
-                            // Already at last world boss — stay
-                            killsOnFloor = 0;
-                            break;
-                        }
-                    } else if (!alreadyCompleted) {
-                        const killsNeeded = KILLS_PER_FLOOR - killsOnFloor;
-                        if (remainingKills >= killsNeeded) {
-                            remainingKills -= killsNeeded;
-                            worldProgress[currentWorld] = currentFloor;
-                            currentFloor++;
-                            killsOnFloor = 0;
-                            if (currentFloor > 10) {
-                                // Shouldn't happen but guard
-                                currentFloor = 10;
-                                break;
-                            }
-                        } else {
-                            killsOnFloor += remainingKills;
-                            remainingKills = 0;
-                        }
-                    } else {
-                        // Already completed floor — don't advance, consume remaining kills here
-                        break;
-                    }
-                }
+                // Roll drops at the floor level where each kill happened
+                const weaponDrops = killsByLevel.flatMap(({ floorLevel, kills }) =>
+                    rollWeaponDrops(kills, floorLevel)
+                );
 
                 const dropOp = saveWeaponDrops(character.id, weaponDrops);
                 const ops = [
@@ -382,7 +396,7 @@ export async function getOrCreateCharacter(userId) {
                             xp: newXp,
                             level: newLevel,
                             baseAttack: { increment: levelUps },
-                            totalKills: { increment: kills },
+                            totalKills: { increment: totalKills },
                             currentHp: Math.round(hpRemaining),
                             lastOnline: new Date(),
                             currentWorld,
@@ -399,15 +413,11 @@ export async function getOrCreateCharacter(userId) {
 
                 offlineGains = {
                     secondsOffline: Math.floor(secondsOffline),
-                    kills,
+                    kills: totalKills,
                     xpGained,
                     levelUps,
-                    drops: weaponDrops.map((w) => ({
-                        name: w.name,
-                        rarity: w.rarity,
-                        count: 1,
-                    })),
-                    enemyName: character.currentEnemy.name,
+                    drops: weaponDrops.map((w) => ({ name: w.name, rarity: w.rarity, count: 1 })),
+                    enemyName: character.currentEnemy?.name ?? selectedEnemy?.name ?? "enemy",
                 };
             }
         }
@@ -454,11 +464,22 @@ export async function processTick(userId, { kills, durationSeconds }) {
         if (extraGapSeconds > SLEEP_THRESHOLD_SECONDS) {
             const catchUpSeconds = Math.min(extraGapSeconds, MAX_OFFLINE_SECONDS);
             const catchUpStats = computeStats(character);
-            const { kills: offlineKills, hpRemaining: offlineHp } = simulateOffline(
-                catchUpStats, scaledEnemy, catchUpSeconds, character.currentHp
+            const allEnemies = await getAllEnemiesCached();
+
+            const {
+                killsByLevel: catchUpKills, hpRemaining: offlineHp,
+                currentWorld: catchUpWorld, currentFloor: catchUpFloor,
+                killsOnFloor: catchUpFloorKills, worldProgress: catchUpProgress,
+            } = simulateOfflineFloors(
+                catchUpStats, allEnemies,
+                character.currentWorld, character.currentFloor, character.killsOnFloor,
+                character.worldProgress, catchUpSeconds, character.currentHp
             );
+
+            const offlineKills = catchUpKills.reduce((sum, k) => sum + k.kills, 0);
+
             if (offlineKills > 0) {
-                const xpGained = offlineKills * scaledEnemy.xpReward;
+                const xpGained = catchUpKills.reduce((sum, k) => sum + k.kills * k.xpPerKill, 0);
                 let newXp = character.xp + xpGained;
                 let newLevel = character.level;
                 let levelUps = 0;
@@ -467,7 +488,9 @@ export async function processTick(userId, { kills, durationSeconds }) {
                     newLevel++;
                     levelUps++;
                 }
-                const weaponDrops = rollWeaponDrops(offlineKills, floorLevel);
+                const weaponDrops = catchUpKills.flatMap(({ floorLevel, kills }) =>
+                    rollWeaponDrops(kills, floorLevel)
+                );
                 const dropOp = saveWeaponDrops(character.id, weaponDrops);
                 const ops = [
                     prisma.idleCharacter.update({
@@ -479,6 +502,10 @@ export async function processTick(userId, { kills, durationSeconds }) {
                             totalKills: { increment: offlineKills },
                             currentHp: Math.round(offlineHp),
                             lastOnline: new Date(tickNow - durationSeconds * 1000),
+                            currentWorld: catchUpWorld,
+                            currentFloor: catchUpFloor,
+                            killsOnFloor: catchUpFloorKills,
+                            worldProgress: catchUpProgress,
                         },
                         include: characterInclude,
                     }),
@@ -492,7 +519,7 @@ export async function processTick(userId, { kills, durationSeconds }) {
                     xpGained,
                     levelUps,
                     drops: weaponDrops.map((w) => ({ name: w.name, rarity: w.rarity, count: 1 })),
-                    enemyName: character.currentEnemy.name,
+                    enemyName: character.currentEnemy?.name ?? scaledEnemy.name,
                 };
             } else {
                 character = await prisma.idleCharacter.update({
