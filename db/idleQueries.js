@@ -421,7 +421,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
         const newHp = stats.maxHp;
         await prisma.idleCharacter.update({
             where: { id: character.id },
-            data: { currentHp: newHp, lastOnline: new Date() },
+            data: { currentHp: newHp, lastOnline: new Date(), currentEnemyId: enemyId },
         });
         const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
         return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, offlineGains };
@@ -437,7 +437,7 @@ export async function processTick(userId, { enemyId, kills, durationSeconds }) {
     const { hpRemaining } = simulateCombat(stats, enemy, durationSeconds, character.currentHp);
 
     if (validatedKills === 0) {
-        await prisma.idleCharacter.update({ where: { id: character.id }, data: { currentHp: Math.round(hpRemaining), lastOnline: new Date() } });
+        await prisma.idleCharacter.update({ where: { id: character.id }, data: { currentHp: Math.round(hpRemaining), lastOnline: new Date(), currentEnemyId: enemyId } });
         const updated = await prisma.idleCharacter.findUnique({ where: { id: character.id }, include: characterInclude });
         return { character: formatCharacter(updated), drops: [], levelUps: 0, xpGained: 0, killsProcessed: 0, offlineGains };
     }
