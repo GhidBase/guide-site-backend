@@ -108,6 +108,41 @@ const enemies = [
     { name: "Ancient Dragon",   world: "dungeon", isBoss: false, baseHp: 100,baseAttack: 16, baseDefense: 14, attackSpeed: 0.4, xpReward: 85 },
     // Dungeon boss
     { name: "Dungeon Warden",   world: "dungeon", isBoss: true,  baseHp: 500, baseAttack: 30, baseDefense: 25, attackSpeed: 0.6, xpReward: 700 },
+
+    // Swamp pool (regular)
+    { name: "Bog Witch",          world: "swamp", isBoss: false, baseHp: 90,  baseAttack: 16, baseDefense: 10, attackSpeed: 0.9, xpReward: 100 },
+    { name: "Swamp Lurker",       world: "swamp", isBoss: false, baseHp: 130, baseAttack: 18, baseDefense: 14, attackSpeed: 0.6, xpReward: 115 },
+    { name: "Venomfang Serpent",  world: "swamp", isBoss: false, baseHp: 110, baseAttack: 22, baseDefense: 11, attackSpeed: 1.1, xpReward: 125 },
+    // Swamp boss
+    { name: "Hydra",              world: "swamp", isBoss: true,  baseHp: 700, baseAttack: 42, baseDefense: 32, attackSpeed: 0.7, xpReward: 1100 },
+
+    // Tundra pool (regular)
+    { name: "Frost Wraith",  world: "tundra", isBoss: false, baseHp: 130, baseAttack: 22, baseDefense: 14, attackSpeed: 1.0, xpReward: 160 },
+    { name: "Yeti",          world: "tundra", isBoss: false, baseHp: 200, baseAttack: 25, baseDefense: 20, attackSpeed: 0.5, xpReward: 175 },
+    { name: "Ice Elemental", world: "tundra", isBoss: false, baseHp: 160, baseAttack: 30, baseDefense: 17, attackSpeed: 0.8, xpReward: 185 },
+    // Tundra boss
+    { name: "Frost Giant",   world: "tundra", isBoss: true,  baseHp: 950, baseAttack: 55, baseDefense: 42, attackSpeed: 0.5, xpReward: 1600 },
+
+    // Volcano pool (regular)
+    { name: "Lava Imp",    world: "volcano", isBoss: false, baseHp: 170, baseAttack: 28, baseDefense: 18, attackSpeed: 1.2, xpReward: 230 },
+    { name: "Magma Golem", world: "volcano", isBoss: false, baseHp: 260, baseAttack: 30, baseDefense: 28, attackSpeed: 0.4, xpReward: 250 },
+    { name: "Fire Drake",  world: "volcano", isBoss: false, baseHp: 220, baseAttack: 38, baseDefense: 22, attackSpeed: 0.9, xpReward: 270 },
+    // Volcano boss
+    { name: "Inferno Wyrm", world: "volcano", isBoss: true, baseHp: 1300, baseAttack: 70, baseDefense: 55, attackSpeed: 0.6, xpReward: 2300 },
+
+    // Abyss pool (regular)
+    { name: "Void Shade",    world: "abyss", isBoss: false, baseHp: 220, baseAttack: 36, baseDefense: 22, attackSpeed: 1.3, xpReward: 320 },
+    { name: "Abyssal Fiend", world: "abyss", isBoss: false, baseHp: 320, baseAttack: 40, baseDefense: 30, attackSpeed: 0.7, xpReward: 350 },
+    { name: "Chaos Spawn",   world: "abyss", isBoss: false, baseHp: 270, baseAttack: 48, baseDefense: 26, attackSpeed: 1.0, xpReward: 370 },
+    // Abyss boss
+    { name: "Abyssal Lord",  world: "abyss", isBoss: true,  baseHp: 1700, baseAttack: 90, baseDefense: 72, attackSpeed: 0.65, xpReward: 3200 },
+
+    // Celestial pool (regular)
+    { name: "Fallen Seraph",   world: "celestial", isBoss: false, baseHp: 290, baseAttack: 46, baseDefense: 30, attackSpeed: 1.1, xpReward: 450 },
+    { name: "Astral Sentinel", world: "celestial", isBoss: false, baseHp: 400, baseAttack: 50, baseDefense: 40, attackSpeed: 0.6, xpReward: 480 },
+    { name: "Storm Archon",    world: "celestial", isBoss: false, baseHp: 340, baseAttack: 60, baseDefense: 34, attackSpeed: 0.9, xpReward: 510 },
+    // Celestial boss
+    { name: "Celestial Arbiter", world: "celestial", isBoss: true, baseHp: 2200, baseAttack: 115, baseDefense: 95, attackSpeed: 0.7, xpReward: 4500 },
 ];
 
 // Drop table: [enemyName, itemName, dropRate]

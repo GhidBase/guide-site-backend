@@ -2,7 +2,7 @@
 import { prisma } from "../lib/prisma.js";
 import { generateWeapon } from "../utils/weaponGenerator.js";
 
-const WORLDS = ["forest", "cave", "dungeon"];
+const WORLDS = ["forest", "cave", "dungeon", "swamp", "tundra", "volcano", "abyss", "celestial"];
 // floors 1-9 regular, floor 10 = boss
 const KILLS_PER_FLOOR = 10;
 const ENEMY_SCALE = 1.5;
