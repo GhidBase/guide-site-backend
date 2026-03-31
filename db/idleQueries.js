@@ -261,18 +261,17 @@ function formatCharacter(character) {
     };
 }
 
-async function saveWeaponDrops(characterId, drops) {
-    return drops.map((w) =>
-        prisma.idleWeapon.create({
-            data: {
-                characterId,
-                name: w.name, weaponType: w.type, typeLabel: w.typeLabel,
-                rarity: w.rarity, origin: w.origin, level: w.level,
-                stats: w.stats, baseStats: w.baseStats, parts: w.parts,
-                totalRating: w.totalRating,
-            },
-        })
-    );
+function saveWeaponDrops(characterId, drops) {
+    if (drops.length === 0) return null;
+    return prisma.idleWeapon.createMany({
+        data: drops.map((w) => ({
+            characterId,
+            name: w.name, weaponType: w.type, typeLabel: w.typeLabel,
+            rarity: w.rarity, origin: w.origin, level: w.level,
+            stats: w.stats, baseStats: w.baseStats, parts: w.parts,
+            totalRating: w.totalRating,
+        })),
+    });
 }
 
 export async function getOrCreateCharacter(userId) {
@@ -375,8 +374,8 @@ export async function getOrCreateCharacter(userId) {
                     }
                 }
 
-                const dropOps = await saveWeaponDrops(character.id, weaponDrops);
-                const [updatedChar] = await prisma.$transaction([
+                const dropOp = saveWeaponDrops(character.id, weaponDrops);
+                const ops = [
                     prisma.idleCharacter.update({
                         where: { id: character.id },
                         data: {
@@ -393,8 +392,9 @@ export async function getOrCreateCharacter(userId) {
                         },
                         include: characterInclude,
                     }),
-                    ...dropOps,
-                ], { timeout: 15000 });
+                    ...(dropOp ? [dropOp] : []),
+                ];
+                const [updatedChar] = await prisma.$transaction(ops, { timeout: 15000 });
                 character = updatedChar;
 
                 offlineGains = {
@@ -468,8 +468,8 @@ export async function processTick(userId, { kills, durationSeconds }) {
                     levelUps++;
                 }
                 const weaponDrops = rollWeaponDrops(offlineKills, floorLevel);
-                const dropOps = await saveWeaponDrops(character.id, weaponDrops);
-                const [updatedChar] = await prisma.$transaction([
+                const dropOp = saveWeaponDrops(character.id, weaponDrops);
+                const ops = [
                     prisma.idleCharacter.update({
                         where: { id: character.id },
                         data: {
@@ -482,8 +482,9 @@ export async function processTick(userId, { kills, durationSeconds }) {
                         },
                         include: characterInclude,
                     }),
-                    ...dropOps,
-                ], { timeout: 15000 });
+                    ...(dropOp ? [dropOp] : []),
+                ];
+                const [updatedChar] = await prisma.$transaction(ops, { timeout: 15000 });
                 character = updatedChar;
                 offlineGains = {
                     secondsOffline: Math.floor(extraGapSeconds),
@@ -622,8 +623,8 @@ export async function processTick(userId, { kills, durationSeconds }) {
         nextEnemyId = nextEnemy.id;
     }
 
-    const dropOps = await saveWeaponDrops(character.id, weaponDrops);
-    const [updatedCharacter] = await prisma.$transaction([
+    const dropOp = saveWeaponDrops(character.id, weaponDrops);
+    const ops = [
         prisma.idleCharacter.update({
             where: { id: character.id },
             data: {
@@ -641,8 +642,9 @@ export async function processTick(userId, { kills, durationSeconds }) {
             },
             include: characterInclude,
         }),
-        ...dropOps,
-    ], { timeout: 15000 });
+        ...(dropOp ? [dropOp] : []),
+    ];
+    const [updatedCharacter] = await prisma.$transaction(ops, { timeout: 15000 });
 
     return {
         character: formatCharacter(updatedCharacter),
