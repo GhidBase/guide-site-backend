@@ -376,7 +376,7 @@ export async function getOrCreateCharacter(userId) {
                 }
 
                 const dropOps = await saveWeaponDrops(character.id, weaponDrops);
-                await prisma.$transaction([
+                const [updatedChar] = await prisma.$transaction([
                     prisma.idleCharacter.update({
                         where: { id: character.id },
                         data: {
@@ -391,9 +391,11 @@ export async function getOrCreateCharacter(userId) {
                             killsOnFloor,
                             worldProgress,
                         },
+                        include: characterInclude,
                     }),
                     ...dropOps,
                 ]);
+                character = updatedChar;
 
                 offlineGains = {
                     secondsOffline: Math.floor(secondsOffline),
@@ -407,19 +409,15 @@ export async function getOrCreateCharacter(userId) {
                     })),
                     enemyName: character.currentEnemy.name,
                 };
-
-                character = await prisma.idleCharacter.findUnique({
-                    where: { userId },
-                    include: characterInclude,
-                });
             }
         }
     }
 
-    await prisma.idleCharacter.update({
+    // Fire-and-forget — lastOnline is not in the response
+    prisma.idleCharacter.update({
         where: { id: character.id },
         data: { lastOnline: new Date() },
-    });
+    }).catch(console.error);
 
     return { character: formatCharacter(character), offlineGains };
 }
