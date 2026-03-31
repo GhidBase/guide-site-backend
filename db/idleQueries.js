@@ -214,7 +214,7 @@ async function pickEnemy(world, isBoss) {
 }
 
 const characterInclude = {
-    weapons: { orderBy: { id: "desc" }, take: 100 },
+    weapons: { orderBy: { id: "desc" } },
     currentEnemy: true,
 };
 
