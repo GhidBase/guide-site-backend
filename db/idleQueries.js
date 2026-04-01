@@ -552,7 +552,7 @@ export async function processTick(userId, { kills, durationSeconds }) {
     const maxAllowed = Math.ceil(killsPerSec * durationSeconds * 1.2);
     let validatedKills = Math.min(kills, maxAllowed);
 
-    const { hpRemaining } = simulateCombat(stats, scaledEnemy, durationSeconds, character.currentHp);
+    const { hpRemaining } = simulateCombat(stats, scaledEnemy, durationSeconds, character.currentHp, isBoss ? 1 : Infinity);
 
     if (validatedKills === 0) {
         const updated = await prisma.idleCharacter.update({
