@@ -22,6 +22,7 @@ import pagesRouter from "./routes/pagesRouter.js";
 import blocksRouter from "./routes/blocksRouter.js";
 import siteImagesRouter from "./routes/siteImagesRouter.js";
 import idleRouter from "./routes/idleRouter.js";
+import fmGamesRouter from "./routes/fmGamesRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -79,6 +80,8 @@ app.use("/sections", sectionsRouter);
 app.use("/navbars", navbarsRouter);
 app.use("/reviews", reviewRouter);
 app.use("/idle", idleRouter);
+app.use("/fm-games", fmGamesRouter);
+app.use("/fm", express.static("public/fm"));
 app.use("/", indexRouter);
 app.use("/", authRoutes);
 
