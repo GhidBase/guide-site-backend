@@ -497,10 +497,13 @@ model IdleEnemyDrop {
   @@index([enemyId])
 }
 
-model FmGame {
-  id                String   @id
-  title             String
-  description       String?
-  creationTimestamp String?
-  updatedAt         DateTime @updatedAt
+model FmLead {
+  id        String   @id
+  name      String
+  email     String
+  company   String?
+  message   String?
+  synced    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
