@@ -62,4 +62,10 @@ async function deleteLead(req, res) {
     res.json({ ok: true });
 }
 
-export default { getLeads, upsertLead, createFromWeb, getPending, deleteLead };
+async function deleteAllLeads(req, res) {
+    const { count } = await prisma.fmLead.deleteMany();
+    console.log(`Deleted all leads (${count})`);
+    res.json({ ok: true, deleted: count });
+}
+
+export default { getLeads, upsertLead, createFromWeb, getPending, deleteLead, deleteAllLeads };
