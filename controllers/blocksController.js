@@ -2,6 +2,10 @@ import db from "../db/blocksQueries.js";
 import pendingDb from "../db/pendingQueries.js";
 import pagesDb from "../db/pagesQueries.js";
 import contributionDb from "../db/contributionQueries.js";
+import {
+    normalizePendingBlockContent,
+    serializeFilesForReview,
+} from "../utils/pendingReviewSnapshots.js";
 
 async function getBlock(req, res) {
     const blockId = +req.params.blockId;
@@ -40,6 +44,8 @@ async function deleteBlock(req, res) {
             blockId: id,
             userId: req.user.id,
             operation: "DELETE",
+            oldContent: exists.content,
+            oldFiles: serializeFilesForReview(exists.files),
             type: "block-deletion-request",
         });
         res.status(202).json({
@@ -53,6 +59,11 @@ async function updateBlock(req, res) {
     const gameId = req.params.gameId != null ? +req.params.gameId : null;
     console.log("Block update request received for Block ID: " + id);
     const { content, content2, type } = req.body;
+    const existingBlock = await db.getBlock({ id, gameId });
+
+    if (!existingBlock) {
+        return res.status(404).json({ error: "Block not found" });
+    }
 
     if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
         const result = await db.updateBlock({ id, content, content2, gameId });
@@ -80,6 +91,10 @@ async function updateBlock(req, res) {
             userId: req.user.id,
             operation: "UPDATE",
             content: { content, content2 },
+            oldContent: existingBlock.content,
+            newContent: normalizePendingBlockContent({ content, content2 }),
+            oldFiles: serializeFilesForReview(existingBlock.files),
+            newFiles: serializeFilesForReview(existingBlock.files),
             type: type || "block-update-request",
         });
         res.status(202).json({

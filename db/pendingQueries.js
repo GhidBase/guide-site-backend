@@ -3,6 +3,10 @@ import { prisma } from "../lib/prisma.js";
 async function createPendingBlock({
     blockId,
     content,
+    oldContent,
+    newContent,
+    oldFiles,
+    newFiles,
     type,
     userId,
     operation,
@@ -11,6 +15,10 @@ async function createPendingBlock({
         data: {
             blockId,
             content,
+            oldContent,
+            newContent,
+            oldFiles,
+            newFiles,
             type,
             userId,
             operation,
@@ -32,6 +40,7 @@ async function getPendingBlock(id) {
 async function getPendingBlocks(status = "PENDING") {
     return await prisma.pendingBlock.findMany({
         where: { status },
+        orderBy: { createdAt: "asc" },
         include: {
             block: true,
             user: true,

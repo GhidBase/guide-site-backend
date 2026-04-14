@@ -1,5 +1,6 @@
 import db from "../db/pagesQueries.js";
 import pendingDb from "../db/pendingQueries.js";
+import { normalizePendingBlockContent } from "../utils/pendingReviewSnapshots.js";
 
 async function getPages(req, res) {
     const gameId = +req.params.gameId;
@@ -146,7 +147,8 @@ async function createBlockForPage(req, res) {
         await pendingDb.createPendingBlock({
             userId: req.user.id,
             operation: "CREATE",
-            content: { order, type, pageId, content },
+            content: { order, type, pageId },
+            newContent: normalizePendingBlockContent(req.body),
             type: "block-creation-request",
         });
         res.status(202).json({

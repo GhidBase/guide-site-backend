@@ -67,6 +67,12 @@ async function getFilesByBlock({ blockId, gameId }) {
     });
 }
 
+async function getFilesByBlockId(blockId) {
+    return await prisma.file.findMany({
+        where: { blockId },
+    });
+}
+
 async function deleteFilesByBlock({ blockId, gameId }) {
     return await prisma.file.deleteMany({
         where: { blockId, block: { page: { gameId } } },
@@ -79,6 +85,7 @@ export default {
     getFile,
     deleteFilesByBlock,
     getFilesByBlock,
+    getFilesByBlockId,
     updateFile,
     updateFileStatus,
 };

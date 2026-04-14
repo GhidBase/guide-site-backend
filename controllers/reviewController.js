@@ -45,8 +45,7 @@ async function acceptReview(req, res) {
                 if (pending.blockId) {
                     await blocksDb.updateBlock({
                         id: pending.blockId,
-                        content: pending.content?.content,
-                        content2: pending.content?.content2,
+                        content: pending.newContent,
                     });
                 } else if (
                     pending.content?.pageId &&
@@ -83,11 +82,18 @@ async function acceptReview(req, res) {
 
             case "CREATE":
                 if (pending.content?.pageId && pending.content?.order) {
-                    await pagesDb.createBlockForPage({
+                    const createdBlock = await pagesDb.createBlockForPage({
                         pageId: pending.content.pageId,
                         order: pending.content.order,
                         type: pending.content.type,
                     });
+
+                    if (pending.newContent) {
+                        await blocksDb.updateBlock({
+                            id: createdBlock.id,
+                            content: pending.newContent,
+                        });
+                    }
                 }
                 break;
 

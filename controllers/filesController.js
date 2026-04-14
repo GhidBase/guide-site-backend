@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import db from "../db/filesQueries.js";
 import pendingDb from "../db/pendingQueries.js";
+import { serializeFilesForReview } from "../utils/pendingReviewSnapshots.js";
 
 const s3client = new S3Client({ region: "us-east-2" });
 
@@ -45,6 +46,7 @@ async function uploadFile(req, res) {
             });
             return res.json(newFile);
         } else {
+            const existingFiles = await db.getFilesByBlockId(blockId);
             const newFile = await db.createFile({
                 title: filename,
                 filename,
@@ -57,6 +59,8 @@ async function uploadFile(req, res) {
                 userId: req.user.id,
                 operation: "ADD_FILE",
                 content: { title: filename, url, filename, fileId: newFile.id },
+                oldFiles: serializeFilesForReview(existingFiles),
+                newFiles: serializeFilesForReview([...existingFiles, newFile]),
                 type: "file-upload-request",
             });
             return res.status(202).json({
@@ -85,6 +89,7 @@ async function uploadFile(req, res) {
         res.json(newFile);
     } else {
         // Users have to go through a review system
+        const existingFiles = await db.getFilesByBlockId(blockId);
         const newFile = await db.createFile({
             title,
             url,
@@ -97,6 +102,8 @@ async function uploadFile(req, res) {
             userId: req.user.id,
             operation: "ADD_FILE",
             content: { title, url, filename, fileId: newFile.id },
+            oldFiles: serializeFilesForReview(existingFiles),
+            newFiles: serializeFilesForReview([...existingFiles, newFile]),
             type: "file-upload-request",
         });
         res.status(202).json({
@@ -152,6 +159,10 @@ async function deleteBlockFiles(req, res) {
                         url: file.url,
                         fileId: file.id,
                     },
+                    oldFiles: serializeFilesForReview(files),
+                    newFiles: serializeFilesForReview(
+                        files.filter((current) => current.id !== file.id),
+                    ),
                     type: "file-deletion-request",
                 }),
             ),
@@ -217,6 +228,7 @@ async function deleteFile(req, res) {
             });
         }
 
+        const existingFiles = await db.getFilesByBlockId(fileToDelete.blockId);
         await pendingDb.createPendingBlock({
             blockId: fileToDelete.blockId,
             userId: req.user.id,
@@ -226,6 +238,10 @@ async function deleteFile(req, res) {
                 url: fileToDelete.url,
                 fileId: fileToDelete.id,
             },
+            oldFiles: serializeFilesForReview(existingFiles),
+            newFiles: serializeFilesForReview(
+                existingFiles.filter((file) => file.id !== fileToDelete.id),
+            ),
             type: "file-deletion-request",
         });
 

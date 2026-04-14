@@ -1,11 +1,10 @@
 import { prisma } from "../lib/prisma.js";
 
 async function getBlock({ id, gameId }) {
-    return await prisma.block.findUnique({
+    return await prisma.block.findFirst({
         where: {
-            id, page: {
-                gameId
-            }
+            id,
+            ...(gameId != null ? { page: { gameId } } : {}),
         },
         include: {
             files: true,
@@ -15,9 +14,7 @@ async function getBlock({ id, gameId }) {
 
 async function deleteBlock({ id, gameId }) {
     return await prisma.block.delete({
-        where: {
-            id, page: { gameId }
-        },
+        where: { id },
     });
 }
 
@@ -28,9 +25,7 @@ async function updateBlock({ id, content, content2, gameId }) {
             : { type: "richText", content, content2 };
 
     return await prisma.block.update({
-        where: {
-            id, page: { gameId }
-        },
+        where: { id },
         data: { content: contentData },
         select: { id: true, pageId: true },
     });
