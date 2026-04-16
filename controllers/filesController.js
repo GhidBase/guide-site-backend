@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import db from "../db/filesQueries.js";
 import pendingDb from "../db/pendingQueries.js";
+import imageDb from "../db/gameImageQueries.js";
 
 const s3client = new S3Client({ region: "us-east-2" });
 
@@ -115,10 +116,10 @@ async function deleteBlockFiles(req, res) {
         // Get list of files
         const result = await db.getFilesByBlock({ blockId, gameId });
 
-        // List S3 names
-        const s3Filenames = result.map((current) => current.filename);
-
-        // Delete them all from amazon s3
+        // Only delete S3 objects that are NOT pool image references
+        const allFilenames = result.map((f) => f.filename);
+        const poolFilenames = await imageDb.getPoolFilenameSet(allFilenames);
+        const s3Filenames = allFilenames.filter((fn) => !poolFilenames.has(fn));
 
         console.log("Deleting S3 files");
         const deleteS3Result = await Promise.all(
@@ -134,7 +135,7 @@ async function deleteBlockFiles(req, res) {
 
         console.log(deleteS3Result);
 
-        // Afterwards, delete all the files
+        // Afterwards, delete all the file records
         const deletionResult = await db.deleteFilesByBlock({ blockId, gameId });
 
         console.log(deletionResult);
@@ -193,17 +194,22 @@ async function deleteFile(req, res) {
         console.log("Delete file from DB response:");
         console.log(deleteFileDBResult);
 
-        const deleteFileS3Result = await s3client.send(
-            new DeleteObjectCommand({
-                Bucket: "ldg-guides-images",
-                Key: key,
-            }),
-        );
-
-        console.log(
-            "Delete file from S3 response (success message doesn't indicate deletion)",
-        );
-        console.log(deleteFileS3Result);
+        // Only delete from S3 if this file is not a pool image reference
+        const poolFilenames = await imageDb.getPoolFilenameSet([key]);
+        if (!poolFilenames.has(key)) {
+            const deleteFileS3Result = await s3client.send(
+                new DeleteObjectCommand({
+                    Bucket: "ldg-guides-images",
+                    Key: key,
+                }),
+            );
+            console.log(
+                "Delete file from S3 response (success message doesn't indicate deletion)",
+            );
+            console.log(deleteFileS3Result);
+        } else {
+            console.log("Skipping S3 deletion — file is a pool image reference");
+        }
 
         console.log("End of deletion request");
         res.status(200).json({

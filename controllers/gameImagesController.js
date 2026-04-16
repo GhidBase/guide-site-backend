@@ -13,8 +13,9 @@ async function uploadGameImage(req, res) {
     const gameId = +req.params.gameId;
     const file = req.files[0];
     const category = req.body.category || null;
+    const title = req.body.title?.trim() || file.originalname;
     const image = await db.createGameImage({
-        title: file.originalname,
+        title,
         filename: file.key,
         url: file.location,
         gameId,

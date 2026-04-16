@@ -30,8 +30,16 @@ async function getGameImage(id) {
     return await prisma.gameImage.findUnique({ where: { id } });
 }
 
+async function getPoolFilenameSet(filenames) {
+    const rows = await prisma.gameImage.findMany({
+        where: { filename: { in: filenames } },
+        select: { filename: true },
+    });
+    return new Set(rows.map((r) => r.filename));
+}
+
 async function deleteGameImage(id) {
     return await prisma.gameImage.delete({ where: { id } });
 }
 
-export default { getGameImages, getGlobalImages, createGameImage, createGlobalImage, getGameImage, deleteGameImage };
+export default { getGameImages, getGlobalImages, createGameImage, createGlobalImage, getGameImage, deleteGameImage, getPoolFilenameSet };
