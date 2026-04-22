@@ -14,9 +14,9 @@ router.get("/by-id/:gameId/leaderboard", gameController.getLeaderboard);
 router.post("/", requireAdmin, gameController.postGame); //wip
 router.put("/:gameId", requireAdmin, gameController.updateGame);
 router.put("/:gameId/theme", requireAdmin, gameController.updateTheme);
-router.get("/games/:gameId/checklists", gameController.getChecklists);
+router.get("/:gameId/checklists", gameController.getChecklists);
 router.post(
-    "/games/:gameId/checklists",
+    "/:gameId/checklists",
     requireAdmin,
     gameController.postChecklist,
 );

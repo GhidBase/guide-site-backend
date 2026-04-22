@@ -70,18 +70,19 @@ async function updateBlock(req, res) {
         const existingPending =
             await pendingDb.findPendingBlockByBlockIdAndOperation(id, "UPDATE");
         if (existingPending) {
-            return res.status(409).json({
-                error: "A pending update request for this block already exists.",
+            await pendingDb.updatePendingBlock(existingPending.id, {
+                content: { content, content2 },
+                userId: req.user.id,
+            });
+        } else {
+            await pendingDb.createPendingBlock({
+                blockId: id,
+                userId: req.user.id,
+                operation: "UPDATE",
+                content: { content, content2 },
+                type: type || "block-update-request",
             });
         }
-
-        await pendingDb.createPendingBlock({
-            blockId: id,
-            userId: req.user.id,
-            operation: "UPDATE",
-            content: { content, content2 },
-            type: type || "block-update-request",
-        });
         res.status(202).json({
             message: "Block update requested, pending review.",
         });
