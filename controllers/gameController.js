@@ -60,6 +60,14 @@ async function updateGame(req, res) {
     res.send(result);
 }
 
+async function updateChecklist(req, res) {
+    const id = +req.params.checklistId;
+    const { title } = req.body;
+    if (!title) return res.status(400).json({ error: "Title is required" });
+    const result = await db.updateChecklist({ id, title });
+    res.json(result);
+}
+
 async function getChecklists(req, res) {
     const gameId = +req.params.gameId;
     const checklists = await db.getChecklists(gameId);
@@ -159,6 +167,7 @@ export default {
     updateTheme,
     getLeaderboard,
     getGlobalLeaderboard,
+    updateChecklist,
     postChecklist,
     getChecklists,
     getChecklistItems,

@@ -134,6 +134,13 @@ async function createTag(title) {
     });
 }
 
+async function updateChecklist({ id, title }) {
+    return await prisma.checklist.update({
+        where: { id },
+        data: { title },
+    });
+}
+
 async function unlinkItemAndTag({ itemId, tagId }) {
     return await prisma.checklistItem.update({
         where: { id: itemId },
@@ -157,6 +164,7 @@ export default {
     updateChecklistItem,
     getTags,
     createTag,
+    updateChecklist,
     unlinkItemAndTag,
     getGame,
     updateGame,
