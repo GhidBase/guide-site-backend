@@ -23,6 +23,7 @@ import blocksRouter from "./routes/blocksRouter.js";
 import siteImagesRouter from "./routes/siteImagesRouter.js";
 import idleRouter from "./routes/idleRouter.js";
 import fmLeadsRouter from "./routes/fmLeadsRouter.js";
+import presetsRouter from "./routes/presetsRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -81,6 +82,7 @@ app.use("/navbars", navbarsRouter);
 app.use("/reviews", reviewRouter);
 app.use("/idle", idleRouter);
 app.use("/fm-leads", fmLeadsRouter);
+app.use("/presets", presetsRouter);
 app.use("/fm", express.static("public/fm"));
 app.use("/", indexRouter);
 app.use("/", authRoutes);
