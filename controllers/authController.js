@@ -103,7 +103,7 @@ async function updateUserRole(req, res) {
 
 async function getAllUsers(req, res) {
     try {
-        const users = await db.getAllUsers();
+        const users = await db.getAllUsers(req.query.search);
         res.json(users);
     } catch (error) {
         console.error("Error fetching users:", error);

@@ -30,6 +30,8 @@ model User {
   pendingBlocks    PendingBlock[]
   contributedPages Page[]          @relation("PageContributors")
   idleCharacter    IdleCharacter?
+  gameEditors      GameEditor[]
+  chatMessages     ChatMessage[]
 }
 
 model PendingBlock {
@@ -73,6 +75,32 @@ model Game {
   units             Unit[]
   unitCategories    UnitCategory[]
   tags              Tag[]          @relation("GameToTag")
+  editors           GameEditor[]
+  chatMessages      ChatMessage[]
+}
+
+model GameEditor {
+  userId     Int
+  gameId     Int
+  assignedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  gameId    Int
+  userId    Int
+  username  String
+  text      String
+  type      String   @default("message")
+  createdAt DateTime @default(now())
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, createdAt])
 }
 
 model Section {
