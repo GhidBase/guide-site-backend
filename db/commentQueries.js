@@ -15,9 +15,10 @@ async function resolvePageId(pageIdParam) {
 }
 
 function formatComment(comment, currentUserId) {
-    const { upvotes, replies, ...rest } = comment;
+    const { upvotes, replies, user, ...rest } = comment;
     return {
         ...rest,
+        userRole: user?.role ?? "USER",
         upvoteCount: upvotes ? upvotes.length : 0,
         hasUpvoted: currentUserId
             ? upvotes.some((u) => u.userId === currentUserId)
@@ -37,11 +38,13 @@ async function getAllCommentsForGame(gameId, currentUserId) {
         orderBy: { createdAt: "desc" },
         include: {
             page: { select: { title: true, slug: true } },
+            user: { select: { role: true } },
             upvotes: { select: { userId: true } },
             replies: {
                 orderBy: { createdAt: "asc" },
                 include: {
                     page: { select: { title: true, slug: true } },
+                    user: { select: { role: true } },
                     upvotes: { select: { userId: true } },
                 },
             },
@@ -49,17 +52,19 @@ async function getAllCommentsForGame(gameId, currentUserId) {
     });
 
     return comments.map((c) => {
-        const { page, upvotes, replies, ...rest } = c;
+        const { page, user, upvotes, replies, ...rest } = c;
         return {
             ...rest,
+            userRole: user.role,
             pageTitle: page.title,
             pageSlug: page.slug,
             upvoteCount: upvotes.length,
             hasUpvoted: currentUserId ? upvotes.some((u) => u.userId === currentUserId) : false,
             replies: replies.map((r) => {
-                const { page: rPage, upvotes: rUpvotes, ...rRest } = r;
+                const { page: rPage, user: rUser, upvotes: rUpvotes, ...rRest } = r;
                 return {
                     ...rRest,
+                    userRole: rUser.role,
                     pageTitle: rPage.title,
                     pageSlug: rPage.slug,
                     upvoteCount: rUpvotes.length,
@@ -75,10 +80,12 @@ async function getCommentsForPage(pageId, currentUserId) {
         where: { pageId, parentId: null },
         orderBy: { createdAt: "asc" },
         include: {
+            user: { select: { role: true } },
             upvotes: { select: { userId: true } },
             replies: {
                 orderBy: { createdAt: "asc" },
                 include: {
+                    user: { select: { role: true } },
                     upvotes: { select: { userId: true } },
                 },
             },
@@ -90,7 +97,7 @@ async function getCommentsForPage(pageId, currentUserId) {
 async function createComment({ pageId, userId, username, text }) {
     const comment = await prisma.comment.create({
         data: { pageId, userId, username, text },
-        include: { upvotes: { select: { userId: true } } },
+        include: { user: { select: { role: true } }, upvotes: { select: { userId: true } } },
     });
     return formatComment({ ...comment, replies: [] }, userId);
 }
@@ -106,7 +113,7 @@ async function createReply({ parentId, userId, username, text }) {
 
     const reply = await prisma.comment.create({
         data: { pageId: parent.pageId, userId, username, text, parentId },
-        include: { upvotes: { select: { userId: true } } },
+        include: { user: { select: { role: true } }, upvotes: { select: { userId: true } } },
     });
     return formatComment(reply, userId);
 }
@@ -120,10 +127,11 @@ async function updateComment(id, text) {
         where: { id },
         data: { text },
         include: {
+            user: { select: { role: true } },
             upvotes: { select: { userId: true } },
             replies: {
                 orderBy: { createdAt: "asc" },
-                include: { upvotes: { select: { userId: true } } },
+                include: { user: { select: { role: true } }, upvotes: { select: { userId: true } } },
             },
         },
     });
