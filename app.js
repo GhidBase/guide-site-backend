@@ -24,6 +24,7 @@ import siteImagesRouter from "./routes/siteImagesRouter.js";
 import idleRouter from "./routes/idleRouter.js";
 import fmLeadsRouter from "./routes/fmLeadsRouter.js";
 import presetsRouter from "./routes/presetsRouter.js";
+import dmRouter from "./routes/dmRouter.js";
 
 // Authentication
 import session from "express-session";
@@ -83,6 +84,7 @@ app.use("/reviews", reviewRouter);
 app.use("/idle", idleRouter);
 app.use("/fm-leads", fmLeadsRouter);
 app.use("/presets", presetsRouter);
+app.use("/dms", dmRouter);
 app.use("/fm", express.static("public/fm"));
 app.use("/", indexRouter);
 app.use("/", authRoutes);
