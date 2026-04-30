@@ -507,3 +507,14 @@ model FmLead {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Preset {
+  id         Int      @id @default(autoincrement())
+  name       String
+  light      Json
+  dark       Json
+  animations Json
+  createdBy  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
