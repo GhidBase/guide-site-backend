@@ -1,3 +1,19 @@
+import { prisma } from "../lib/prisma.js";
+
+export async function isEditorForGame(userId, gameId) {
+    if (!gameId) return false;
+    const entry = await prisma.gameEditor.findUnique({
+        where: { userId_gameId: { userId, gameId } },
+    });
+    return !!entry;
+}
+
+export function canEditGame(user, gameId) {
+    if (!user) return Promise.resolve(false);
+    if (user.role === "ADMIN" || user.role === "EDITOR") return Promise.resolve(true);
+    return isEditorForGame(user.id, gameId);
+}
+
 export function requireAuth(req, res, next) {
     if (req.isAuthenticated()) {
         next();
