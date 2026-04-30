@@ -47,13 +47,13 @@ async function updateUserRole(id, newRole) {
     });
 }
 
-async function getAllUsers() {
+async function getAllUsers(search) {
     const result = await prisma.user.findMany({
-        select: {
-            id: true,
-            username: true,
-            role: true,
-        },
+        where: search
+            ? { username: { contains: search, mode: "insensitive" } }
+            : undefined,
+        select: { id: true, username: true, role: true },
+        take: search ? 10 : undefined,
     });
     return result;
 }
