@@ -2,6 +2,7 @@ import db from "../db/blocksQueries.js";
 import pendingDb from "../db/pendingQueries.js";
 import pagesDb from "../db/pagesQueries.js";
 import contributionDb from "../db/contributionQueries.js";
+import { canEditGame } from "../config/auth.js";
 
 async function getBlock(req, res) {
     const blockId = +req.params.blockId;
@@ -22,7 +23,7 @@ async function deleteBlock(req, res) {
 
     console.log("Block deletion request received on block ID:" + id);
 
-    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+    if (await canEditGame(req.user, gameId)) {
         const result = await db.deleteBlock({ id, gameId });
         console.log("Deleted block:");
         console.log(result);
@@ -54,7 +55,7 @@ async function updateBlock(req, res) {
     console.log("Block update request received for Block ID: " + id);
     const { content, content2, type } = req.body;
 
-    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+    if (await canEditGame(req.user, gameId)) {
         const result = await db.updateBlock({ id, content, content2, gameId });
         console.log(result);
         await pagesDb.addContributor({ pageId: result.pageId, userId: req.user.id });
