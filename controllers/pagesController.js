@@ -1,5 +1,6 @@
 import db from "../db/pagesQueries.js";
 import pendingDb from "../db/pendingQueries.js";
+import { canEditGame } from "../config/auth.js";
 
 async function getPages(req, res) {
     const gameId = +req.params.gameId;
@@ -130,15 +131,12 @@ async function getPage(req, res) {
 async function createBlockForPage(req, res) {
     console.log("Received block creation request");
     const pageId = +req.params.pageId;
+    const gameId = req.params.gameId ? +req.params.gameId : null;
     const order = +req.body.order;
     const type = req.body.type;
-    // blank type implies it's a text block
-    //const result = await db.createBlockForPage({ pageId, order, type });
-    //console.log(result);
-    //res.send(result);
-    //const content = req.body.content;
+    const content = req.body.content;
 
-    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+    if (await canEditGame(req.user, gameId)) {
         const result = await db.createBlockForPage({ pageId, order, type });
         console.log(result);
         res.send(result);
@@ -157,11 +155,12 @@ async function createBlockForPage(req, res) {
 
 async function updateBlocksForPage(req, res) {
     const pageId = +req.params.pageId;
+    const gameId = req.params.gameId ? +req.params.gameId : null;
     const updateType = req.body.type;
     const order = +req.body.order;
     console.log("Received request to update blocks for page " + pageId);
     console.log(updateType);
-    if (req.user.role === "ADMIN" || req.user.role === "EDITOR") {
+    if (await canEditGame(req.user, gameId)) {
         let result;
         if (updateType === "offset") {
             result = await offsetBlockOrderForPage(pageId, order);
