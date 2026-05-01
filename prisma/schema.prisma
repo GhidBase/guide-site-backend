@@ -32,6 +32,8 @@ model User {
   idleCharacter    IdleCharacter?
   gameEditors      GameEditor[]
   chatMessages     ChatMessage[]
+  dmThreadMessages DMMessage[]    @relation("DMThread")
+  dmSentMessages   DMMessage[]    @relation("DMSender")
 }
 
 model PendingBlock {
@@ -77,30 +79,6 @@ model Game {
   tags              Tag[]          @relation("GameToTag")
   editors           GameEditor[]
   chatMessages      ChatMessage[]
-}
-
-model GameEditor {
-  userId     Int
-  gameId     Int
-  assignedAt DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, gameId])
-}
-
-model ChatMessage {
-  id        Int      @id @default(autoincrement())
-  gameId    Int
-  userId    Int
-  username  String
-  text      String
-  type      String   @default("message")
-  createdAt DateTime @default(now())
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([gameId, createdAt])
 }
 
 model Section {
@@ -525,6 +503,41 @@ model IdleEnemyDrop {
   @@index([enemyId])
 }
 
+model GameEditor {
+  userId     Int
+  gameId     Int
+  assignedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gameId])
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  gameId    Int
+  userId    Int
+  username  String
+  text      String
+  type      String   @default("message")
+  createdAt DateTime @default(now())
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, createdAt])
+}
+
+model Preset {
+  id         Int      @id @default(autoincrement())
+  name       String
+  light      Json
+  dark       Json
+  animations Json
+  createdBy  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 model FmLead {
   id        String   @id
   name      String
@@ -545,4 +558,18 @@ model Preset {
   createdBy  Int
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model DMMessage {
+  id             Int      @id @default(autoincrement())
+  threadUserId   Int
+  senderId       Int
+  senderUsername String
+  isFromAdmin    Boolean
+  text           String   @db.Text
+  createdAt      DateTime @default(now())
+  threadUser     User     @relation("DMThread", fields: [threadUserId], references: [id], onDelete: Cascade)
+  sender         User     @relation("DMSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([threadUserId, createdAt])
 }
