@@ -54,8 +54,9 @@ async function updateGame(req, res) {
     const navbar = req.body.navbar;
     const discordUrl = req.body.discordUrl;
     const showSupportButton = req.body.showSupportButton;
+    const isActive = req.body.isActive;
     console.log(id, title, slug);
-    const result = await db.updateGame({ id, slug, title, navbar, discordUrl, showSupportButton });
+    const result = await db.updateGame({ id, slug, title, navbar, discordUrl, showSupportButton, isActive });
     console.log(result);
     res.send(result);
 }
